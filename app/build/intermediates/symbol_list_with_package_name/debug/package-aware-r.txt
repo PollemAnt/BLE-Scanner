@@ -1998,7 +1998,7 @@ id collapseActionView
 id column
 id column_reverse
 id confirm_button
-id connect_button
+id connect
 id constraint
 id container
 id content
@@ -2028,7 +2028,6 @@ id design_navigation_view
 id device
 id device_address
 id device_distance
-id device_info
 id device_name
 id dialog_button
 id dimensions
@@ -2249,6 +2248,7 @@ id search_mag_icon
 id search_plate
 id search_src_text
 id search_voice_btn
+id select_button
 id select_dialog_listview
 id selected
 id selection_type
@@ -2569,7 +2569,6 @@ string chip_text
 string clear_list
 string clear_text_end_icon_content_description
 string connect
-string connected
 string disconnect
 string error_icon_content_description
 string exposed_dropdown_menu_content_description
@@ -2641,6 +2640,7 @@ string path_password_eye_mask_strike_through
 string path_password_eye_mask_visible
 string path_password_strike_through
 string search_menu_title
+string select
 string signal_strength_icon
 string start_scan
 string status_bar_notification_info_overflow

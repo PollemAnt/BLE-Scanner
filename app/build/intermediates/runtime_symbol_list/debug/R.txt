@@ -1997,7 +1997,7 @@ int id collapseActionView 0x7f080080
 int id column 0x7f080081
 int id column_reverse 0x7f080082
 int id confirm_button 0x7f080083
-int id connect_button 0x7f080084
+int id connect 0x7f0801fb
 int id constraint 0x7f080085
 int id container 0x7f080086
 int id content 0x7f080087
@@ -2027,7 +2027,6 @@ int id design_navigation_view 0x7f08009e
 int id device 0x7f08009f
 int id device_address 0x7f0800a0
 int id device_distance 0x7f0800a1
-int id device_info 0x7f0800a2
 int id device_name 0x7f0800a3
 int id dialog_button 0x7f0800a4
 int id dimensions 0x7f0800a5
@@ -2248,6 +2247,7 @@ int id search_mag_icon 0x7f08017b
 int id search_plate 0x7f08017c
 int id search_src_text 0x7f08017d
 int id search_voice_btn 0x7f08017e
+int id select_button 0x7f0801fa
 int id select_dialog_listview 0x7f08017f
 int id selected 0x7f080180
 int id selection_type 0x7f080181
@@ -2568,7 +2568,6 @@ int string chip_text 0x7f0e0024
 int string clear_list 0x7f0e0025
 int string clear_text_end_icon_content_description 0x7f0e0026
 int string connect 0x7f0e0027
-int string connected 0x7f0e0028
 int string disconnect 0x7f0e0029
 int string error_icon_content_description 0x7f0e002a
 int string exposed_dropdown_menu_content_description 0x7f0e002b
@@ -2640,6 +2639,7 @@ int string path_password_eye_mask_strike_through 0x7f0e006c
 int string path_password_eye_mask_visible 0x7f0e006d
 int string path_password_strike_through 0x7f0e006e
 int string search_menu_title 0x7f0e006f
+int string select 0x7f0e0077
 int string signal_strength_icon 0x7f0e0070
 int string start_scan 0x7f0e0071
 int string status_bar_notification_info_overflow 0x7f0e0072

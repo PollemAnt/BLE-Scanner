@@ -14,9 +14,9 @@ public class ScanResultLayoutBindingImpl extends ScanResultLayoutBinding  {
     static {
         sIncludes = null;
         sViewsWithIds = new android.util.SparseIntArray();
-        sViewsWithIds.put(R.id.signal_logo, 5);
-        sViewsWithIds.put(R.id.blinky_logo, 6);
-        sViewsWithIds.put(R.id.connect_button, 7);
+        sViewsWithIds.put(R.id.blinky_logo, 5);
+        sViewsWithIds.put(R.id.signal_logo, 6);
+        sViewsWithIds.put(R.id.select_button, 7);
     }
     // views
     // variables
@@ -29,13 +29,13 @@ public class ScanResultLayoutBindingImpl extends ScanResultLayoutBinding  {
     }
     private ScanResultLayoutBindingImpl(androidx.databinding.DataBindingComponent bindingComponent, View root, Object[] bindings) {
         super(bindingComponent, root, 0
-            , (android.widget.ImageView) bindings[6]
+            , (android.widget.ImageView) bindings[5]
             , (androidx.cardview.widget.CardView) bindings[0]
-            , (android.widget.Button) bindings[7]
             , (android.widget.TextView) bindings[2]
             , (android.widget.TextView) bindings[4]
             , (android.widget.TextView) bindings[1]
-            , (android.widget.ImageView) bindings[5]
+            , (android.widget.Button) bindings[7]
+            , (android.widget.ImageView) bindings[6]
             , (android.widget.TextView) bindings[3]
             );
         this.cardView.setTag(null);

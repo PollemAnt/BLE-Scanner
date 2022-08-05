@@ -38,13 +38,12 @@ class ScanResultAdapter(private var list: MutableList<ScanResult>) :
             with(binding) {
                 this.result = scanResult
                 val distance = calculateDistance(scanResult)
-               val deviceDialogFragment = DeviceDialogFragment()
-                val mainActivity = MainActivity()
-                Device.name = scanResult.device.name
-                Device.address=scanResult.device.address
+                val deviceDialogFragment = DeviceDialogFragment()
+
+
 
                 deviceDistance.text = distance.toString()
-                val signal = when (distance)  {
+                val signal = when (distance){
                     in 0.0..2.0 -> R.drawable.ic_network_4_bar
                     in 2.0..4.0 -> R.drawable.ic_network_3_bar
                     in 4.0..8.0 -> R.drawable.ic_network_2_bar
@@ -59,11 +58,14 @@ class ScanResultAdapter(private var list: MutableList<ScanResult>) :
                 signalLogo.setImageResource(signal)
                 blinkyLogo.setImageResource(blinky)
 
-                connectButton.setOnClickListener {
-                    Log.v("qwe", " connectButton.setOnClickListener ")
-                    if(deviceDialogFragment.connect(scanResult.device.address)) {
-                        cardView.setBackgroundColor(Color.parseColor("#66BF5C"))
-                    }
+                selectButton.setOnClickListener {
+                    Log.v("qwe", " selectButton.setOnClickListener ")
+                    Device.name = scanResult.device.name
+                    Device.address = scanResult.device.address
+                    cardView.setBackgroundColor(Color.parseColor("#bcbcbc"))
+                    //if(deviceDialogFragment.connect(scanResult.device.address)) {
+                    //    cardView.setBackgroundColor(Color.parseColor("#66BF5C"))
+                    //}
                 }
 
             }

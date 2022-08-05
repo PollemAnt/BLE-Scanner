@@ -17,10 +17,10 @@
     <string name="bluetooth_not_supported">Bluetooth not supported</string>
     <string name="clear_list">Clear</string>
     <string name="connect">Connect</string>
-    <string name="connected">Connected</string>
     <string name="disconnect">Disconnect</string>
     <string name="get_info">Get info</string>
     <string name="is_device_blinky_icon">Is device blinky icon</string>
+    <string name="select">Select</string>
     <string name="signal_strength_icon">Signal strength icon</string>
     <string name="start_scan">Start scan</string>
     <string name="stop_scan">Stop scan</string>

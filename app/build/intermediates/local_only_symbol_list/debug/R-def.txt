@@ -29,11 +29,10 @@ id blinky_logo
 id card_view
 id card_view_servis
 id charakterystyki
-id connect_button
+id connect
 id device
 id device_address
 id device_distance
-id device_info
 id device_name
 id favorite
 id gatt_costam
@@ -41,6 +40,7 @@ id led_button
 id nazwa
 id recycler_clear
 id scan_recycler
+id select_button
 id servises
 id servisy
 id signal_logo
@@ -55,10 +55,10 @@ string ble_not_supported
 string bluetooth_not_supported
 string clear_list
 string connect
-string connected
 string disconnect
 string get_info
 string is_device_blinky_icon
+string select
 string signal_strength_icon
 string start_scan
 string stop_scan

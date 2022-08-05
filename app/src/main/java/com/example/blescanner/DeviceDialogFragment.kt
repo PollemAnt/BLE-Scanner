@@ -1,9 +1,9 @@
 package com.example.blescanner
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
 import android.bluetooth.*
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -24,6 +24,7 @@ class DeviceDialogFragment: DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         _binding = DeviceServiceBinding.inflate(LayoutInflater.from(context))
 
+
         binding.device.text = Device.device.toString()
         binding.servises.text = Device.services.toString()
         binding.gattCostam.text = Device.characteristics.toString()
@@ -34,7 +35,7 @@ class DeviceDialogFragment: DialogFragment() {
         binding.favorite.setOnClickListener{
             isFavorite =!isFavorite
             binding.favorite.setImageResource(setIcon())
-            Toast.makeText(Device.activity, "Eliminacion fallida.", Toast.LENGTH_LONG).show()
+            Toast.makeText(Device.activity, "Favorite", Toast.LENGTH_LONG).show()
         }
         return AlertDialog.Builder(requireActivity()).setView(binding.root).create()
     }
@@ -66,13 +67,14 @@ class DeviceDialogFragment: DialogFragment() {
 
 
     private val bluetoothGattCallback = object : BluetoothGattCallback() {
+
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             Log.v("qwe", "Start  onConnectionStateChange ")
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.v("qwe","successfully connected to the GATT Server")
                 val discoverservis = gatt.discoverServices()
                 Log.v("qwe", "Czy discoverServices sie udal? = $discoverservis")
-                Log.v("qwe","lączenie z: "+gatt.device.name+" "+gatt.device.address)
+                Log.v("qwe","Lączenie z: "+gatt.device.name+" "+gatt.device.address)
                 Device.device[gatt.device.name]= gatt.device.address
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.v("qwe","disconnected from the GATT Server")
@@ -84,23 +86,24 @@ class DeviceDialogFragment: DialogFragment() {
                 Log.v("qwe","onServicesDiscovered")
                 listServices = gatt?.services as MutableList<BluetoothGattService>
                 Log.v("lista","listServices:"+ listServices)
-                addServicesToDevice(listServices)
-
+                addInfoToDevice(listServices)
             } else {
                 Log.v("qwe", "onServicesDiscovered received: $status")
             }
         }
 
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
+
             if(gatt!!.services[3].characteristics[1] == characteristic )
             {
                 Device.buttonState = !Device.buttonState
-                Toast.makeText(Device.activity, "Eliminacion fallida.", Toast.LENGTH_LONG).show()
+                Log.v("qwe","Device.buttonState: "+ Device.buttonState)
+                Device.activity!!.runOnUiThread(Runnable {
+                    Toast.makeText(Device.activity, "Device.buttonState: "+ Device.buttonState, Toast.LENGTH_SHORT).show() })
             }
             super.onCharacteristicChanged(gatt, characteristic)
         }
     }
-
 
     private fun ledControl(list: MutableList<BluetoothGattService>){
         Log.v("qwe", "ledControl ")
@@ -108,8 +111,9 @@ class DeviceDialogFragment: DialogFragment() {
         val byteArray = if(led) byteArrayOf(0x01) else byteArrayOf(0x00)
         characteristic.value = byteArray
         Device.bluetoothGatt?.writeCharacteristic(characteristic)
+        Toast.makeText(Device.activity, "Led is "+if(led)"on" else "off", Toast.LENGTH_LONG).show()
         led = !led
-        Toast.makeText(Device.activity, "Eliminacion fallida.", Toast.LENGTH_LONG).show()
+
     }
 
     private fun setIcon():Int {
@@ -119,7 +123,7 @@ class DeviceDialogFragment: DialogFragment() {
             R.drawable.ic_baseline_favorite_24
     }
 
-    private fun addServicesToDevice(gattServices: List<BluetoothGattService>?) {
+    private fun addInfoToDevice(gattServices: List<BluetoothGattService>?) {
         Log.v("qwe","addDeviceServices")
         if (gattServices == null) return
         gattServices.forEach { gattService ->
@@ -130,6 +134,8 @@ class DeviceDialogFragment: DialogFragment() {
                     }
         }
         setNotificationDeviceButtonState()
+        Device.activity!!.runOnUiThread(Runnable {
+            Toast.makeText(Device.activity, "Connected", Toast.LENGTH_SHORT).show() })
     }
 
     private fun clearDevice(){
@@ -140,6 +146,7 @@ class DeviceDialogFragment: DialogFragment() {
     }
 
     private fun setNotificationDeviceButtonState(){
+        Log.v("qwe","setNotificationDeviceButtonState")
         val buttonState = Device.bluetoothGatt!!.services[3].characteristics[1]
         Device.bluetoothGatt!!.setCharacteristicNotification(buttonState,true)
 
@@ -150,13 +157,18 @@ class DeviceDialogFragment: DialogFragment() {
 
 
 
+
     fun saveData(device: HashMap<String, String>) {
+
 
     }
 
     fun getData() {
 
     }
+
+
+
 }
 
 

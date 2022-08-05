@@ -1,110 +1,114 @@
 [
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-mdpi_ic_launcher.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-mdpi/ic_launcher.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_ic_network_3_bar.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\ic_network_3_bar.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_ic_baseline_radio_button_checked_24.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/ic_baseline_radio_button_checked_24.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_ic_baseline_favorite_24.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/ic_baseline_favorite_24.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_ic_network_1_bar.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\ic_network_1_bar.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable-anydpi-v24_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-pngs-28:\\drawable-anydpi-v24\\ic_launcher_foreground.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-hdpi_ic_launcher.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-hdpi/ic_launcher.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-xxhdpi_ic_launcher.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-xxhdpi\\ic_launcher.webp"
+    },
+    {
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-xxhdpi_ic_launcher_round.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-xxhdpi\\ic_launcher_round.webp"
+    },
+    {
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_blinky.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\blinky.xml"
+    },
+    {
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-anydpi-v26\\ic_launcher.xml"
     },
     {
         "merged": "com.example.blescanner.app-merged_res-33:/layout_activity_main.xml.flat",
         "source": "com.example.blescanner.app-main-35:/layout/activity_main.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-xxhdpi_ic_launcher.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-xxhdpi/ic_launcher.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\layout_device_service.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\layout\\device_service.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_ic_baseline_favorite_border_24.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/ic_baseline_favorite_border_24.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-xxxhdpi_ic_launcher_round.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-xxxhdpi\\ic_launcher_round.webp"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_ic_network_3_bar.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/ic_network_3_bar.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_ic_network_4_bar.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\ic_network_4_bar.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-mdpi_ic_launcher_round.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-mdpi/ic_launcher_round.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_ic_baseline_favorite_border_24.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\ic_baseline_favorite_border_24.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_ic_network_1_bar.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/ic_network_1_bar.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_ic_baseline_radio_button_unchecked_24.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\ic_baseline_radio_button_unchecked_24.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_blinky.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/blinky.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-hdpi_ic_launcher.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-hdpi\\ic_launcher.webp"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-xhdpi_ic_launcher_round.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-xhdpi/ic_launcher_round.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-xxxhdpi_ic_launcher.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-xxxhdpi\\ic_launcher.webp"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-xhdpi_ic_launcher.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-xhdpi/ic_launcher.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_not_blinky.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\not_blinky.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_not_blinky.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/not_blinky.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-xhdpi_ic_launcher.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-xhdpi\\ic_launcher.webp"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-xxhdpi/ic_launcher_round.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\layout_scan_result_layout.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\layout\\scan_result_layout.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-xxxhdpi_ic_launcher.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-xxxhdpi/ic_launcher.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-mdpi_ic_launcher_round.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-mdpi\\ic_launcher_round.webp"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/layout_device_service.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/layout/device_service.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_ic_baseline_radio_button_checked_24.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\ic_baseline_radio_button_checked_24.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/layout_scan_result_layout.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/layout/scan_result_layout.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\layout\\activity_main.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_ic_network_4_bar.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/ic_network_4_bar.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_ic_network_2_bar.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\ic_network_2_bar.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-hdpi_ic_launcher_round.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-hdpi/ic_launcher_round.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_ic_baseline_favorite_24.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\ic_baseline_favorite_24.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_ic_baseline_radio_button_unchecked_24.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/ic_baseline_radio_button_unchecked_24.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-hdpi_ic_launcher_round.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-hdpi\\ic_launcher_round.webp"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_ic_launcher_background.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/ic_launcher_background.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-xhdpi_ic_launcher_round.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-xhdpi\\ic_launcher_round.webp"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-xxxhdpi/ic_launcher_round.webp"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\drawable_ic_launcher_background.xml.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\drawable\\ic_launcher_background.xml"
     },
     {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable_ic_network_2_bar.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/drawable/ic_network_2_bar.xml"
-    },
-    {
-        "merged": "com.example.blescanner.app-merged_res-33:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "com.example.blescanner.app-main-35:/mipmap-anydpi-v26/ic_launcher_round.xml"
-    },
-    {
-        "merged": "com.example.blescanner.app-merged_res-33:/drawable-anydpi-v24_ic_launcher_foreground.xml.flat",
-        "source": "com.example.blescanner.app-pngs-28:/drawable-anydpi-v24/ic_launcher_foreground.xml"
+        "merged": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-merged_res-33:\\mipmap-mdpi_ic_launcher.webp.flat",
+        "source": "C:\\Users\\Andrzej Sobierajski\\.gradle\\daemon\\7.3.3\\com.example.blescanner.app-main-35:\\mipmap-mdpi\\ic_launcher.webp"
     }
 ]

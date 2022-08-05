@@ -7,6 +7,7 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
@@ -67,6 +68,14 @@ class MainActivity : AppCompatActivity() {
                     if (value) resources.getString(R.string.stop_scan) else resources.getString(R.string.start_scan)
             }
         }
+    private var isConnected = true
+        set(value) {
+            field = value
+            runOnUiThread {
+                binding.connect.text =
+                    if (value) resources.getString(R.string.connect) else resources.getString(R.string.get_info)
+            }
+        }
 
     private val startForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -122,6 +131,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scanResultAdapter: ScanResultAdapter
 
 
+
         override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
@@ -145,14 +155,19 @@ class MainActivity : AppCompatActivity() {
                 if (isScanning) stopScan()
                 scanResultAdapter.setData(mutableListOf())
             }
-            deviceInfo.setOnClickListener {
+            connect.setOnClickListener {
                 Log.v("qwe", "deviceInfo.setOnClickListener")
                 deviceDialogFragment = DeviceDialogFragment()
-                Log.v("jak", "EdeviceDialogFragmentE "+ deviceDialogFragment)
+                isConnected = !isConnected
+                if(!isConnected)
+                deviceDialogFragment!!.connect(Device.address)
+                else
                 deviceDialogFragment!!.show(supportFragmentManager, "customDialog")
+
             }
         }
     }
+
     /*
     fun prepConnect(): Boolean {
         deviceDialogFragment = DeviceDialogFragment()

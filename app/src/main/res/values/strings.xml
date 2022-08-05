@@ -5,8 +5,8 @@
     <string name="start_scan">Start scan</string>
     <string name="stop_scan">Stop scan</string>
     <string name="clear_list">Clear</string>
+    <string name="select">Select</string>
     <string name="connect">Connect</string>
-    <string name="connected">Connected</string>
     <string name="get_info">Get info</string>
     <string name="disconnect">Disconnect</string>
     <string name="store">Store</string>

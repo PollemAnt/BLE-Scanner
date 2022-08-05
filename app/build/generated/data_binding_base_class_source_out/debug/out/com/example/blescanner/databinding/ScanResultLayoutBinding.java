@@ -26,9 +26,6 @@ public abstract class ScanResultLayoutBinding extends ViewDataBinding {
   public final CardView cardView;
 
   @NonNull
-  public final Button connectButton;
-
-  @NonNull
   public final TextView deviceAddress;
 
   @NonNull
@@ -36,6 +33,9 @@ public abstract class ScanResultLayoutBinding extends ViewDataBinding {
 
   @NonNull
   public final TextView deviceName;
+
+  @NonNull
+  public final Button selectButton;
 
   @NonNull
   public final ImageView signalLogo;
@@ -47,15 +47,15 @@ public abstract class ScanResultLayoutBinding extends ViewDataBinding {
   protected ScanResult mResult;
 
   protected ScanResultLayoutBinding(Object _bindingComponent, View _root, int _localFieldCount,
-      ImageView blinkyLogo, CardView cardView, Button connectButton, TextView deviceAddress,
-      TextView deviceDistance, TextView deviceName, ImageView signalLogo, TextView signalStrength) {
+      ImageView blinkyLogo, CardView cardView, TextView deviceAddress, TextView deviceDistance,
+      TextView deviceName, Button selectButton, ImageView signalLogo, TextView signalStrength) {
     super(_bindingComponent, _root, _localFieldCount);
     this.blinkyLogo = blinkyLogo;
     this.cardView = cardView;
-    this.connectButton = connectButton;
     this.deviceAddress = deviceAddress;
     this.deviceDistance = deviceDistance;
     this.deviceName = deviceName;
+    this.selectButton = selectButton;
     this.signalLogo = signalLogo;
     this.signalStrength = signalStrength;
   }

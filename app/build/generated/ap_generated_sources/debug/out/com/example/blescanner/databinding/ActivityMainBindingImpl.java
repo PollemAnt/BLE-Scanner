@@ -15,7 +15,7 @@ public class ActivityMainBindingImpl extends ActivityMainBinding  {
         sIncludes = null;
         sViewsWithIds = new android.util.SparseIntArray();
         sViewsWithIds.put(R.id.ble_scanner, 1);
-        sViewsWithIds.put(R.id.device_info, 2);
+        sViewsWithIds.put(R.id.connect, 2);
         sViewsWithIds.put(R.id.recycler_clear, 3);
         sViewsWithIds.put(R.id.scan_recycler, 4);
     }

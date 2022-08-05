@@ -19,7 +19,7 @@ public abstract class ActivityMainBinding extends ViewDataBinding {
   public final Button bleScanner;
 
   @NonNull
-  public final Button deviceInfo;
+  public final Button connect;
 
   @NonNull
   public final Button recyclerClear;
@@ -28,10 +28,10 @@ public abstract class ActivityMainBinding extends ViewDataBinding {
   public final RecyclerView scanRecycler;
 
   protected ActivityMainBinding(Object _bindingComponent, View _root, int _localFieldCount,
-      Button bleScanner, Button deviceInfo, Button recyclerClear, RecyclerView scanRecycler) {
+      Button bleScanner, Button connect, Button recyclerClear, RecyclerView scanRecycler) {
     super(_bindingComponent, _root, _localFieldCount);
     this.bleScanner = bleScanner;
-    this.deviceInfo = deviceInfo;
+    this.connect = connect;
     this.recyclerClear = recyclerClear;
     this.scanRecycler = scanRecycler;
   }
