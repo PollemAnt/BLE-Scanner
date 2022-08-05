@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.3675" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/blinky.xml" value="0.315" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/favorite.xml" value="0.3675" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_baseline_check_24.xml" value="0.315" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_baseline_clear_24.xml" value="0.315" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_baseline_favorite_24.xml" value="0.3675" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_baseline_favorite_border_24.xml" value="0.3675" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_baseline_radio_button_checked_24.xml" value="0.3555" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_baseline_radio_button_unchecked_24.xml" value="0.3675" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_launcher_background.xml" value="0.3675" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_network_1_bar.xml" value="0.3095" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_network_2_bar.xml" value="0.264" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_network_3_bar.xml" value="0.3675" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/ic_network_4_bar.xml" value="0.3675" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/drawable/not_blinky.xml" value="0.315" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/layout/activity_main.xml" value="0.4" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/layout/connect_panel.xml" value="0.2930253623188406" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/layout/device_home.xml" value="0.264" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/layout/device_info.xml" value="0.365625" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/layout/device_service.xml" value="0.3438914027149321" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/layout/device_servis.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/layout/scan_result_layout.xml" value="0.3278985507246377" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AndroidStudioProjects/BLE-Scanner/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.3675" />
+        <entry key="..\:/Users/Andrzej Sobierajski/AppData/Local/Android/Sdk/platforms/android-32/data/res/layout/simple_dropdown_item_1line.xml" value="0.36666666666666664" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.31927083333333334" />
+        <entry key="app/src/main/res/layout/scan_result_layout.xml" value="0.3282051282051282" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>

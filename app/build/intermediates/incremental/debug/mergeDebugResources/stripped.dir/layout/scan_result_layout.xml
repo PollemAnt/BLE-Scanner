@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+                                                                   
+    
+                 
+                         
+                                                     
+           
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_view"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_margin="8dp"
+        android:background="@color/white" android:tag="layout/scan_result_layout_0" xmlns:android="http://schemas.android.com/apk/res/android">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="330dp"
+                android:layout_height="match_parent"
+                android:layout_weight="10"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/device_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"
+                    android:tag="binding_1"                                                      
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/device_address"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"
+                    android:tag="binding_2"                              />
+
+                <TextView
+                    android:id="@+id/signal_strength"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"
+                    android:tag="binding_3"                    />
+
+                <TextView
+                    android:id="@+id/device_distance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"
+                    android:tag="binding_4"       
+                   />
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <ImageView
+                android:id="@+id/signal_logo"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:layout_weight="3"
+                android:contentDescription="@string/signal_strength_icon"
+                android:src="@drawable/ic_network_1_bar" />
+
+            <ImageView
+                android:id="@+id/blinky_logo"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:layout_weight="3"
+                android:contentDescription="@string/is_device_blinky_icon"
+                android:src="@drawable/blinky"
+                />
+
+            <Button
+                android:id="@+id/connect_button"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="6dp"
+                android:text="@string/connect"
+                android:textSize="6dp"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.cardview.widget.CardView>
+         
