@@ -3,12 +3,13 @@ package com.example.blescanner
 import android.app.AlertDialog
 import android.app.Dialog
 import android.bluetooth.*
-import android.content.SharedPreferences
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
+import com.example.blescanner.Device.device
 import com.example.blescanner.databinding.DeviceServiceBinding
 
 
@@ -17,26 +18,36 @@ class DeviceDialogFragment: DialogFragment() {
     private val main = MainActivity()
     private var listServices = mutableListOf<BluetoothGattService>()
     private var led = true
-    private var isFavorite = false
     private var _binding: DeviceServiceBinding? = null
     private val binding get() = _binding!!
+    private val sharedPref = Device.activity?.getPreferences(Context.MODE_PRIVATE)
+
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+
         _binding = DeviceServiceBinding.inflate(LayoutInflater.from(context))
 
-
-        binding.device.text = Device.device.toString()
+        binding.device.text = device.values.toString() + " " + device.keys.toString()
         binding.servises.text = Device.services.toString()
         binding.gattCostam.text = Device.characteristics.toString()
 
         binding.ledButton.setOnClickListener{
             ledControl(Device.services)
         }
+
+        binding.favorite.setImageResource(setIcon())
+
         binding.favorite.setOnClickListener{
-            isFavorite =!isFavorite
+
+            if(!isFavorite())
+                addToFavorite(device)
+            else
+                deleteFromFavorite()
+
+            Toast.makeText(Device.activity, if(!isFavorite())"Delete from favorite" else "Add to favorite", Toast.LENGTH_LONG).show()
             binding.favorite.setImageResource(setIcon())
-            Toast.makeText(Device.activity, "Favorite", Toast.LENGTH_LONG).show()
         }
+
         return AlertDialog.Builder(requireActivity()).setView(binding.root).create()
     }
 
@@ -65,7 +76,6 @@ class DeviceDialogFragment: DialogFragment() {
         }
     }
 
-
     private val bluetoothGattCallback = object : BluetoothGattCallback() {
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
@@ -75,7 +85,7 @@ class DeviceDialogFragment: DialogFragment() {
                 val discoverservis = gatt.discoverServices()
                 Log.v("qwe", "Czy discoverServices sie udal? = $discoverservis")
                 Log.v("qwe","Lączenie z: "+gatt.device.name+" "+gatt.device.address)
-                Device.device[gatt.device.name]= gatt.device.address
+                device[gatt.device.address]= gatt.device.name
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.v("qwe","disconnected from the GATT Server")
             }
@@ -98,8 +108,9 @@ class DeviceDialogFragment: DialogFragment() {
             {
                 Device.buttonState = !Device.buttonState
                 Log.v("qwe","Device.buttonState: "+ Device.buttonState)
-                Device.activity!!.runOnUiThread(Runnable {
-                    Toast.makeText(Device.activity, "Device.buttonState: "+ Device.buttonState, Toast.LENGTH_SHORT).show() })
+                Device.activity!!.runOnUiThread {
+                    Toast.makeText(Device.activity, "Device.buttonState: " + Device.buttonState, Toast.LENGTH_SHORT).show()
+                }
             }
             super.onCharacteristicChanged(gatt, characteristic)
         }
@@ -111,16 +122,15 @@ class DeviceDialogFragment: DialogFragment() {
         val byteArray = if(led) byteArrayOf(0x01) else byteArrayOf(0x00)
         characteristic.value = byteArray
         Device.bluetoothGatt?.writeCharacteristic(characteristic)
-        Toast.makeText(Device.activity, "Led is "+if(led)"on" else "off", Toast.LENGTH_LONG).show()
+        Toast.makeText(Device.activity, "Led is "+if(led) "on" else "off", Toast.LENGTH_LONG).show()
         led = !led
-
     }
 
     private fun setIcon():Int {
-        return if(!isFavorite)
-            R.drawable.ic_baseline_favorite_border_24
-        else
+        return if(isFavorite())
             R.drawable.ic_baseline_favorite_24
+        else
+            R.drawable.ic_baseline_favorite_border_24
     }
 
     private fun addInfoToDevice(gattServices: List<BluetoothGattService>?) {
@@ -133,15 +143,19 @@ class DeviceDialogFragment: DialogFragment() {
                     Device.characteristics.add(gattCharacteristic)
                     }
         }
+        Device.activity!!.runOnUiThread {
+            Toast.makeText(Device.activity, "Connected", Toast.LENGTH_SHORT).show()
+        }
+
         setNotificationDeviceButtonState()
-        Device.activity!!.runOnUiThread(Runnable {
-            Toast.makeText(Device.activity, "Connected", Toast.LENGTH_SHORT).show() })
     }
 
     private fun clearDevice(){
         Device.services.clear()
         Device.characteristics.clear()
-        Device.device.clear()
+        device.clear()
+        Device.address =""
+        Device.buttonState = true
         Device.bluetoothGatt = null
     }
 
@@ -155,20 +169,27 @@ class DeviceDialogFragment: DialogFragment() {
         Device.bluetoothGatt!!.writeDescriptor(descriptor)
     }
 
-
-
-
-    fun saveData(device: HashMap<String, String>) {
-
-
+    private fun isFavorite():Boolean{
+        return sharedPref!!.all.contains(device.keys.toString())
     }
 
-    fun getData() {
-
+    private fun addToFavorite(device:HashMap<String, String>) {
+        with (sharedPref!!.edit()) {
+            Log.v("qwe","addToFavorite: "+ device.keys.toString() + device.values.toString())
+            putString(device.keys.toString(), device.values.toString())
+            commit()
+        }
+        Log.v("qwe","new ADD sharedPref!!.all: "+ sharedPref.all)
     }
 
-
-
+    private fun deleteFromFavorite() {
+        Log.v("qwe","deleteFromFavorite: " + device.keys.toString())
+        with (sharedPref!!.edit()) {
+            remove(device.keys.toString())
+            commit()
+        }
+        Log.v("qwe","new DELETE sharedPref!!.all: "+ sharedPref.all)
+    }
 }
 
 
