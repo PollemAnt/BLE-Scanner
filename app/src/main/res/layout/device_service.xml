@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
-    <data>
-        <variable
-            name="gatt"
-            type="android.bluetooth.BluetoothGattService" />
-    </data>
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/card_view_servis"
+        android:id="@+id/card_view_service"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="20dp"
@@ -23,14 +18,12 @@
                 android:layout_weight="10"
                 android:orientation="vertical">
 
-
-
                 <TextView
-                    android:id="@+id/nazwa"
+                    android:id="@+id/name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="0dp"
-                    android:text="Połączono z:"
+                    android:text="Connected:"
                     android:textSize="20dp"
                     android:textStyle="bold" />
 
@@ -43,48 +36,42 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/servisy"
+                    android:id="@+id/services"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="0dp"
-                    android:text="Serwisy:"
-                    android:textSize="16dp"
-                    />
+                    android:text="Services:"
+                    android:textSize="16dp" />
 
                 <TextView
-                    android:id="@+id/servises"
+                    android:id="@+id/services_list"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="0dp"
                     android:textSize="14dp" />
 
                 <TextView
-                    android:id="@+id/charakterystyki"
+                    android:id="@+id/characteristics"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="2dp"
-                    android:text="Charakterystyki:"
-                    android:textSize="16dp"
-                     />
+                    android:text="Characteristics:"
+                    android:textSize="16dp" />
 
                 <TextView
-                    android:id="@+id/gatt_costam"
+                    android:id="@+id/characteristics_list"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="2dp"
                     android:textSize="14dp" />
-
-
-
-
             </androidx.appcompat.widget.LinearLayoutCompat>
 
             <Button
-                android:id="@+id/led_button"
+                android:id="@+id/diode_button"
                 android:layout_width="40dp"
                 android:layout_height="80dp"
-                android:text="Dioda"
                 android:layout_marginRight="6dp"
+                android:text="Dioda"
                 android:textSize="9dp" />
 
             <ImageView
@@ -93,9 +80,7 @@
                 android:layout_height="70dp"
                 android:layout_margin="1dp"
                 android:layout_weight="1"
-                android:src="@drawable/ic_baseline_favorite_border_24"
-                />
-
+                android:src="@drawable/ic_baseline_favorite_border_24" />
         </androidx.appcompat.widget.LinearLayoutCompat>
     </androidx.cardview.widget.CardView>
 </layout>

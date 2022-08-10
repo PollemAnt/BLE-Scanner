@@ -16,11 +16,11 @@
             app:justifyContent="space_evenly">
 
             <Button
-                android:id="@+id/ble_scan"
+                android:id="@+id/start_stop_scan_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/start_scan"
                 android:layout_gravity="center"
+                android:text="@string/start_scan"
                 app:layout_constraintBottom_toTopOf="@id/scan_recycler"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -31,21 +31,20 @@
                 android:id="@+id/connect"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/connect"
                 android:layout_gravity="center"
+                android:text="@string/connect"
                 app:layout_constraintBottom_toTopOf="@id/scan_recycler"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.02"
-                />
+                app:layout_constraintVertical_bias="0.02" />
 
             <Button
                 android:id="@+id/recycler_clear"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/clear_list"
                 android:layout_gravity="center"
+                android:text="@string/clear_list"
                 app:layout_constraintBottom_toTopOf="@id/scan_recycler"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
