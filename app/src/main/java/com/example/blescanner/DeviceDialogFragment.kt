@@ -8,9 +8,9 @@ import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import com.example.blescanner.BluetoothService.bluetoothDevice
-import com.example.blescanner.BluetoothService.diodeControl
 import com.example.blescanner.BluetoothService.listOfCharacteristic
 import com.example.blescanner.BluetoothService.listOfServices
+import com.example.blescanner.BluetoothService.readDiodeStatus
 import com.example.blescanner.databinding.DeviceServiceBinding
 
 
@@ -30,7 +30,7 @@ class DeviceDialogFragment : DialogFragment() {
             favorite.setImageResource(setIcon())
 
             diodeButton.setOnClickListener {
-                diodeControl(listOfServices)
+                readDiodeStatus()
             }
             favorite.setOnClickListener {
                 if (!isFavorite())
@@ -65,7 +65,7 @@ class DeviceDialogFragment : DialogFragment() {
             putString(bluetoothDevice.address, bluetoothDevice.name)
             commit()
         }
-        Toast.makeText(requireContext(), "Add to favorite", Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), "Add to favorite", Toast.LENGTH_SHORT).show()
     }
 
     private fun deleteFromFavorite() {
@@ -73,7 +73,7 @@ class DeviceDialogFragment : DialogFragment() {
             remove(bluetoothDevice.address)
             commit()
         }
-        Toast.makeText(requireContext(), "Delete from favorite", Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), "Delete from favorite", Toast.LENGTH_SHORT).show()
     }
 }
 

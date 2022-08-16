@@ -5,39 +5,42 @@ import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.location.LocationManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelUuid
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
+import com.siliconlab.bluetoothmesh.adk.connectable_device.*
+import com.siliconlab.bluetoothmesh.adk.provisioning.ProvisionerConnection
+import java.lang.reflect.Method
+import java.util.*
 
-object BluetoothService {
 
-    private var bluetoothGatt: BluetoothGatt? = null
+object BluetoothService : ConnectableDevice(), ConnectableDeviceWriteCallback {
+
+    private lateinit var bluetoothGatt: BluetoothGatt
     var bluetoothAdapter: BluetoothAdapter? = null
     var scanResults = mutableListOf<ScanResult>()
     lateinit var scanResultAdapter: ScanResultAdapter
     lateinit var listOfServices: List<BluetoothGattService>
     var listOfCharacteristic = mutableListOf<BluetoothGattCharacteristic>()
     lateinit var bluetoothDevice: BluetoothDevice
-    private val bleScanner by lazy {
+    private val bluetoothLeScanner by lazy {
         bluetoothAdapter!!.bluetoothLeScanner
     }
-    private var isDiodeOn = true
+    private var isDiodeOn: String = ""
     private var isButtonPressed = false
 
-    val isLocationPermissionGranted
-        get() = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-
-    val isBluetoothPermissionGranted
-        get() = hasPermission(Manifest.permission.BLUETOOTH)
-
-    val isLocationOn
-        get() = isLocationEnabled()
+    //I dont use it yet, this variables is copy-paste from the documentation
+    private lateinit var scanResult: ScanResult
+    private var refreshBluetoothDeviceCallback: RefreshBluetoothDeviceCallback? = null
+    lateinit var refreshGattServicesCallback: RefreshGattServicesCallback
+    private var mtuSize = 0
 
     fun initialize() {
         bluetoothAdapter = provideBluetoothAdapter()
@@ -86,12 +89,8 @@ object BluetoothService {
 
         override fun onScanFailed(errorCode: Int) {
             super.onScanFailed(errorCode)
-            Log.v("asd", "onScanFailed: code $errorCode")
+            Log.v("error", "onScanFailed: code $errorCode")
         }
-    }
-
-    fun checkActivation(): Boolean {
-        return checkLocationPermission() && checkBluetoothPermission()
     }
 
     fun startScan() {
@@ -102,7 +101,7 @@ object BluetoothService {
         ) {
             scanResults.clear()
             scanResultAdapter.setData(scanResults)
-            bleScanner.startScan(null, scanSettings, scanCallback)
+            bluetoothLeScanner.startScan(null, scanSettings, scanCallback)
         }
     }
 
@@ -112,7 +111,7 @@ object BluetoothService {
                 Manifest.permission.BLUETOOTH
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            bleScanner.stopScan(scanCallback)
+            bluetoothLeScanner.stopScan(scanCallback)
         }
     }
 
@@ -120,30 +119,26 @@ object BluetoothService {
         scanResultAdapter.setData(mutableListOf())
     }
 
-    fun connect(address: String?): Boolean {
-        prepareToNewConnection()
-        bluetoothAdapter?.let { adapter ->
-            try {
-                bluetoothDevice = adapter.getRemoteDevice(address)
-                Log.v("qwe", "connect to the GATT server on the device")
-                bluetoothGatt =
-                    bluetoothDevice.connectGatt(
-                        BlinkyApplication.appContext,
-                        true,
-                        bluetoothGattCallback
-                    )
-                return true
-            } catch (exception: IllegalArgumentException) {
-                Log.v("qwe", "Device not found with provided address.  Unable to connect.")
-                return false
-            }
-        } ?: run {
-            Log.v("qwe", "BluetoothAdapter not initialized")
-            return false
+    fun setDeviceToConnect(scanResult: ScanResult) {
+        bluetoothDevice = scanResult.device
+    }
+
+    override fun connect() {
+        prepareToConnection()
+        try {
+            Log.v("qwe", "Connect to the GATT server on the device")
+            bluetoothGatt = bluetoothDevice.connectGatt(
+                BlinkyApplication.appContext,
+                false,
+                bluetoothGattCallback,
+                BluetoothDevice.TRANSPORT_LE
+            )
+        } catch (exception: IllegalArgumentException) {
+            Log.v("qwe", "Device not found.  Unable to connect.")
         }
     }
 
-    fun prepareToNewConnection() {
+    private fun prepareToConnection() {
         listOfCharacteristic.clear()
         isButtonPressed = false
     }
@@ -167,14 +162,25 @@ object BluetoothService {
                 Log.v("qwe", "onServicesDiscovered GATT_SUCCESS")
                 listOfServices = gatt?.services as List<BluetoothGattService>
                 Log.v("lista", "listOfServices:$listOfServices")
+                //refreshGattServicesCallback.onSuccess()
             } else {
                 Log.v("qwe", "onServicesDiscovered received: $status")
+                refreshGattServicesCallback.onFail()
             }
             createListOfCharacteristic(listOfServices)
             Handler(Looper.getMainLooper()).post {
-                Toast.makeText(BlinkyApplication.appContext, "Connected", Toast.LENGTH_SHORT).show()
+                Toast.makeText(BlinkyApplication.appContext, "Connected", Toast.LENGTH_LONG).show()
             }
             setNotificationDeviceButtonState()
+        }
+
+        //I dont use it yet, this function is copy-paste from the documentation
+        override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+            super.onMtuChanged(gatt, mtu, status)
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                mtuSize = mtu
+                gatt.discoverServices()
+            }
         }
 
         private fun createListOfCharacteristic(gattServices: List<BluetoothGattService>) {
@@ -191,7 +197,6 @@ object BluetoothService {
             characteristic: BluetoothGattCharacteristic?
         ) {
             if (gatt!!.services[3].characteristics[1] == characteristic) {
-                Log.v("qwe", "onCharacteristicChanged")
                 Handler(Looper.getMainLooper()).post {
                     Toast.makeText(
                         BlinkyApplication.appContext,
@@ -203,62 +208,209 @@ object BluetoothService {
             }
             super.onCharacteristicChanged(gatt, characteristic)
         }
+
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            super.onCharacteristicRead(gatt, characteristic, status)
+            if (characteristic == listOfServices[3].characteristics[0])
+                diodeControl()
+        }
     }
 
     private fun setNotificationDeviceButtonState() {
-        val buttonState = bluetoothGatt!!.services[3].characteristics[1]
-        bluetoothGatt!!.setCharacteristicNotification(buttonState, true)
+        val buttonState = bluetoothGatt.services[3].characteristics[1]
+        bluetoothGatt.setCharacteristicNotification(buttonState, true)
 
         val descriptor = buttonState.descriptors[0]
         descriptor.value = (BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-        bluetoothGatt!!.writeDescriptor(descriptor)
+        bluetoothGatt.writeDescriptor(descriptor)
     }
 
-    fun diodeControl(listOfService: List<BluetoothGattService>) {
-        val characteristic = listOfService[3].characteristics[0]
-        val byteArray = if (isDiodeOn) byteArrayOf(0x01) else byteArrayOf(0x00)
-        characteristic.value = byteArray
-        bluetoothGatt?.writeCharacteristic(characteristic)
+    fun readDiodeStatus() {
+        bluetoothGatt.readCharacteristic(listOfServices[3].characteristics[0])
+    }
+
+    private fun diodeControl() {
+        val characteristic = listOfServices[3].characteristics[0]
+        isDiodeOn = listOfServices[3].characteristics[0].value.contentToString()
+        val byteArray = if (isDiodeOn == "[0]") byteArrayOf(0x01) else byteArrayOf(0x00)
+        writeData(
+            listOfServices[3].uuid,
+            characteristic.uuid,
+            byteArray,
+            BluetoothService
+        )
         Toast.makeText(
             BlinkyApplication.appContext,
-            "Led is " + if (isDiodeOn) "on" else "off",
-            Toast.LENGTH_LONG
+            "Led is " + if (isDiodeOn == "[0]") "on" else "off",
+            Toast.LENGTH_SHORT
         ).show()
-        isDiodeOn = !isDiodeOn
     }
 
-    fun hasPermission(permissionType: String): Boolean {
-        return ContextCompat.checkSelfPermission(BlinkyApplication.appContext, permissionType) ==
-                PackageManager.PERMISSION_GRANTED
-    }
-
-    fun isLocationEnabled(): Boolean {
-        val locationManager =
-            getSystemService(
-                BlinkyApplication.appContext,
-                LocationManager::class.java
-            ) as LocationManager
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-    }
-
-    private fun checkLocationPermission(): Boolean {
-        return when (ContextCompat.checkSelfPermission(
-            BlinkyApplication.appContext,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )) {
-            PackageManager.PERMISSION_GRANTED -> true
-            else -> false
+    override fun writeData(
+        service: UUID?,
+        characteristic: UUID?,
+        data: ByteArray?,
+        connectableDeviceWriteCallback: ConnectableDeviceWriteCallback?
+    ) {
+        try {
+            val bluetoothGattCharacteristic =
+                bluetoothGatt.getService(service)!!.getCharacteristic(characteristic)
+            bluetoothGattCharacteristic.value = data
+            //bluetoothGattCharacteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+            if (!bluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic)) {
+                throw Exception("Writing to characteristic failed")
+            }
+            connectableDeviceWriteCallback?.onWrite(service, characteristic)
+        } catch (e: Exception) {
+            Log.e(ContentValues.TAG, "writeData error: ${e.message}")
+            connectableDeviceWriteCallback?.onFailed(service, characteristic)
         }
     }
 
-    private fun checkBluetoothPermission(): Boolean {
-        return when (ContextCompat.checkSelfPermission(
-            BlinkyApplication.appContext,
-            Manifest.permission.BLUETOOTH
-        )) {
-            PackageManager.PERMISSION_GRANTED -> true
-            else -> false
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun refreshBluetoothDevice(callback: RefreshBluetoothDeviceCallback) {
+        refreshBluetoothDeviceCallback = callback
+        val settings = ScanSettings.Builder()
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .build()
+        bluetoothLeScanner.startScan(null, settings, scanCallback)
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    private fun refreshDeviceCache() {
+        try {
+            val refreshMethod: Method = bluetoothGatt.javaClass.getMethod("refresh")
+            val result = refreshMethod.invoke(bluetoothGatt, *arrayOfNulls(0)) as? Boolean
+            Log.d(ContentValues.TAG, "refreshDeviceCache $result")
+        } catch (localException: Exception) {
+            Log.e(ContentValues.TAG, "An exception occured while refreshing device")
         }
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun refreshGattServices(callback: RefreshGattServicesCallback) {
+        refreshGattServicesCallback = callback
+        refreshDeviceCache()
+        bluetoothGatt.discoverServices()
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun disconnect() {
+        if (this::bluetoothGatt.isInitialized) {
+            bluetoothGatt.let {
+                bluetoothGatt.close()
+            }
+        }
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun getMTU(): Int {
+        return mtuSize
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun hasService(service: UUID?): Boolean {
+        if (bluetoothGatt.services.isNotEmpty()) {
+            return bluetoothGatt.getService(service) != null
+        } else {
+            return scanResult.scanRecord?.serviceUuids?.contains(ParcelUuid(service))
+                ?: return false
+        }
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun getServiceData(service: UUID?): ByteArray {
+        TODO("Not yet implemented")
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun subscribe(
+        service: UUID?,
+        characteristic: UUID?,
+        connectableDeviceSubscriptionCallback: ConnectableDeviceSubscriptionCallback
+    ) {
+        try {
+            val bluetoothGattCharacteristic =
+                bluetoothGatt.getService(service)!!.getCharacteristic(characteristic)
+            if (!bluetoothGatt.setCharacteristicNotification(bluetoothGattCharacteristic, true)) {
+                throw Exception("Enabling characteristic notification failed")
+            }
+            val bluetoothGattDescriptor = bluetoothGattCharacteristic.descriptors.takeIf {
+                it.size == 1
+            }?.first()
+                ?: throw Exception("Descriptors size (${bluetoothGattCharacteristic.descriptors.size}) different than expected: 1")
+            bluetoothGattDescriptor.apply {
+                value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            }
+            if (!bluetoothGatt.writeDescriptor(bluetoothGattDescriptor)) {
+                throw Exception("Writing to descriptor failed")
+            }
+            connectableDeviceSubscriptionCallback.onSuccess(service, characteristic)
+        } catch (e: Exception) {
+            Log.e(ContentValues.TAG, "subscribe error: ${e.message}")
+            connectableDeviceSubscriptionCallback.onFail(service, characteristic)
+        }
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun unsubscribe(
+        service: UUID?,
+        characteristic: UUID?,
+        connectableDeviceUnsubscriptionCallback: ConnectableDeviceUnsubscriptionCallback
+    ) {
+        try {
+            val bluetoothGattCharacteristic =
+                bluetoothGatt.getService(service)!!.getCharacteristic(characteristic)
+            if (!bluetoothGatt.setCharacteristicNotification(bluetoothGattCharacteristic, false)) {
+                throw Exception("Disabling characteristic notification failed")
+            }
+            val bluetoothGattDescriptor = bluetoothGattCharacteristic.descriptors.takeIf {
+                it.size == 1
+            }?.first()
+                ?: throw Exception("Descriptors size (${bluetoothGattCharacteristic.descriptors.size}) different than expected: 1")
+            bluetoothGattDescriptor.apply {
+                value = BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+            }
+            if (!bluetoothGatt.writeDescriptor(bluetoothGattDescriptor)) {
+                throw Exception("Writing to descriptor failed")
+            }
+            connectableDeviceUnsubscriptionCallback.onSuccess(service, characteristic)
+        } catch (e: Exception) {
+            Log.e(ContentValues.TAG, "unsubscribe error: ${e.message}")
+            connectableDeviceUnsubscriptionCallback.onFail(service, characteristic)
+        }
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun getName(): String? {
+        return bluetoothDevice.name
+    }
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun getAdvertisementData(): ByteArray? = TODO("Not yet implemented")
+
+    //I dont use it yet, this function is copy-paste from the documentation
+    override fun getUUID(): ByteArray? {
+        val data = getServiceData(ProvisionerConnection.MESH_UNPROVISIONED_SERVICE)
+        if (data != null && data.size >= 16) {
+            val uuid = ByteArray(16)
+            System.arraycopy(data, 0, uuid, 0, uuid.size)
+            return uuid
+        }
+        return null
+    }
+
+    //connectableDeviceWriteCallback functions :
+    override fun onWrite(p0: UUID?, p1: UUID?) {
+        Log.v("qwe", "connectableDeviceWriteCallback onWrite: " + p0 + " " + p1)
+    }
+
+    override fun onFailed(p0: UUID?, p1: UUID?) {
+        Log.v("qwe", "connectableDeviceWriteCallback onFailed: " + p0 + " " + p1)
     }
 
 
