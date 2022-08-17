@@ -2,6 +2,7 @@ package com.example.blescanner
 
 import android.Manifest
 import android.bluetooth.*
+import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
@@ -15,45 +16,45 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.siliconlab.bluetoothmesh.adk.connectable_device.*
 import com.siliconlab.bluetoothmesh.adk.provisioning.ProvisionerConnection
 import java.lang.reflect.Method
 import java.util.*
 
 
-object BluetoothService : ConnectableDevice(), ConnectableDeviceWriteCallback {
+object BluetoothService : ConnectableDevice() {
 
     private lateinit var bluetoothGatt: BluetoothGatt
-    var bluetoothAdapter: BluetoothAdapter? = null
-    var scanResults = mutableListOf<ScanResult>()
-    lateinit var scanResultAdapter: ScanResultAdapter
+    private val bluetoothManager =
+        getSystemService(
+            BlinkyApplication.appContext,
+            BluetoothManager::class.java
+        ) as BluetoothManager
+
+    private val bluetoothScanner: BluetoothLeScanner by lazy {
+        bluetoothManager.adapter.bluetoothLeScanner
+    }
+
+    private val _scanResults: MutableLiveData<List<ScanResult>> = MutableLiveData(emptyList())
+    val scanResults: LiveData<List<ScanResult>> = _scanResults
+
     lateinit var listOfServices: List<BluetoothGattService>
     var listOfCharacteristic = mutableListOf<BluetoothGattCharacteristic>()
     lateinit var bluetoothDevice: BluetoothDevice
-    private val bluetoothLeScanner by lazy {
-        bluetoothAdapter!!.bluetoothLeScanner
-    }
+
     private var isDiodeOn: String = ""
     private var isButtonPressed = false
+
+    private val _newDiode: MutableLiveData<Boolean> = MutableLiveData(false)
+    val newDiode: LiveData<Boolean> = _newDiode
 
     //I dont use it yet, this variables is copy-paste from the documentation
     private lateinit var scanResult: ScanResult
     private var refreshBluetoothDeviceCallback: RefreshBluetoothDeviceCallback? = null
     lateinit var refreshGattServicesCallback: RefreshGattServicesCallback
     private var mtuSize = 0
-
-    fun initialize() {
-        bluetoothAdapter = provideBluetoothAdapter()
-    }
-
-    private fun provideBluetoothAdapter(): BluetoothAdapter {
-        val bluetoothManager =
-            getSystemService(
-                BlinkyApplication.appContext,
-                BluetoothManager::class.java
-            ) as BluetoothManager
-        return bluetoothManager.adapter
-    }
 
     private val scanSettings = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         ScanSettings.Builder()
@@ -74,15 +75,21 @@ object BluetoothService : ConnectableDevice(), ConnectableDeviceWriteCallback {
                     Manifest.permission.BLUETOOTH
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
+                val results = _scanResults.value!!.toMutableList()
+
                 val indexQuery =
-                    scanResults.indexOfFirst { it.device.address == result.device.address }
+                    results.indexOfFirst { it.device.address == result.device.address }
                 if (indexQuery != -1) {
-                    scanResults[indexQuery] = result
-                    scanResultAdapter.notifyItemChanged(indexQuery)
+                    results[indexQuery] = result
+
+                    _scanResults.value = results
+                    //scanResultAdapter.notifyItemChanged(indexQuery)
                 } else {
-                    scanResults.add(result)
-                    scanResults.sortByDescending { it.rssi }
-                    scanResults.removeAll { it.device.name == null }
+                    results.add(result)
+                    results.sortByDescending { it.rssi }
+                    results.removeAll { it.device.name == null }
+
+                    _scanResults.value = results
                 }
             }
         }
@@ -100,8 +107,7 @@ object BluetoothService : ConnectableDevice(), ConnectableDeviceWriteCallback {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             scanResults.clear()
-            scanResultAdapter.setData(scanResults)
-            bluetoothLeScanner.startScan(null, scanSettings, scanCallback)
+            bluetoothScanner.startScan(null, scanSettings, scanCallback)
         }
     }
 
@@ -111,7 +117,7 @@ object BluetoothService : ConnectableDevice(), ConnectableDeviceWriteCallback {
                 Manifest.permission.BLUETOOTH
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            bluetoothLeScanner.stopScan(scanCallback)
+            bluetoothScanner.stopScan(scanCallback)
         }
     }
 

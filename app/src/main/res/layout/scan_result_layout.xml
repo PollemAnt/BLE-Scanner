@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
 
@@ -8,14 +9,14 @@
             type="android.bluetooth.le.ScanResult" />
     </data>
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_view"
         android:layout_width="match_parent"
         android:layout_height="100dp"
-        android:layout_margin="8dp"
-        android:background="@color/white">
+        android:layout_margin="8dp">
 
         <androidx.appcompat.widget.LinearLayoutCompat
+            android:padding="8dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -75,5 +76,5 @@
                 android:src="@drawable/ic_network_1_bar" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 </layout>

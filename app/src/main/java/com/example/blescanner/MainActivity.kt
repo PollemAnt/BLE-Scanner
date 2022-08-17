@@ -22,9 +22,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
-import com.example.blescanner.BluetoothService.clearScan
-import com.example.blescanner.BluetoothService.initialize
-import com.example.blescanner.BluetoothService.setDeviceToConnect
 import com.example.blescanner.databinding.ActivityMainBinding
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -35,6 +32,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val deviceDialogFragment = DeviceDialogFragment()
     private var deviceIsSelected = false
+    private val scanResultAdapter = ScanResultAdapter(emptyList(), ::onScanResultClick)
+
 
     private var isScanning = false
         set(value) {
@@ -91,7 +90,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-    val requestBluetooth =
+    private val requestBluetooth =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 "Bluetooth permission granted".toast()
@@ -104,10 +103,31 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        initialize()
-        checkActivation()
-        setUpAdapter()
 
+        checkActivation()
+        setupRecyclerScanView()
+        setUpViews()
+
+        BluetoothService.scanResults.observe(this) { scanResults ->
+            scanResultAdapter.setData(scanResults)
+        }
+    }
+
+    private fun checkActivation(): Boolean {
+        return checkLocationPermission() && checkBluetoothPermission()
+    }
+
+    private fun checkLocationPermission(): Boolean {
+        return when (ContextCompat.checkSelfPermission(
+            BlinkyApplication.appContext,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )) {
+            PackageManager.PERMISSION_GRANTED -> true
+            else -> false
+        }
+    }
+
+    private fun setUpViews() {
         binding.apply {
             lifecycleOwner = this@MainActivity
             executePendingBindings()
@@ -119,7 +139,7 @@ class MainActivity : AppCompatActivity() {
                     BluetoothService.stopScan()
                     isScanning = false
                 }
-                clearScan()
+                BluetoothService.clearScan()
             }
             connect.setOnClickListener {
                 if (deviceIsSelected) {
@@ -134,7 +154,7 @@ class MainActivity : AppCompatActivity() {
                         deviceDialogFragment.show(supportFragmentManager, "customDialog")
                 } else {
                     Toast.makeText(
-                        BlinkyApplication.appContext,
+                        this@MainActivity,
                         "Select device first",
                         Toast.LENGTH_LONG
                     ).show()
@@ -142,6 +162,39 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun checkBluetoothPermission(): Boolean {
+        return when (ContextCompat.checkSelfPermission(
+            BlinkyApplication.appContext,
+            Manifest.permission.BLUETOOTH
+        )) {
+            PackageManager.PERMISSION_GRANTED -> true
+            else -> false
+        }
+    }
+
+    private fun setupRecyclerScanView() {
+        binding.scanRecycler.apply {
+            adapter = scanResultAdapter
+            layoutManager = LinearLayoutManager(
+                this@MainActivity,
+                RecyclerView.VERTICAL,
+                false
+            )
+            isNestedScrollingEnabled = false
+        }
+        val animator = binding.scanRecycler.itemAnimator
+        if (animator is SimpleItemAnimator) {
+            animator.supportsChangeAnimations = false
+        }
+    }
+
+
+    private fun hasPermission(permissionType: String): Boolean {
+        return ContextCompat.checkSelfPermission(BlinkyApplication.appContext, permissionType) ==
+                PackageManager.PERMISSION_GRANTED
+    }
+
 
     private fun checkPermissions() {
         checkActivation()
@@ -169,9 +222,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkActivation(): Boolean {
-        return checkLocationPermission() && checkBluetoothPermission()
-    }
+
 
     private fun isLocationEnabled(context: Context): Boolean {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -223,59 +274,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkBluetoothPermission(): Boolean {
-        return when (ContextCompat.checkSelfPermission(
-            BlinkyApplication.appContext,
-            Manifest.permission.BLUETOOTH
-        )) {
-            PackageManager.PERMISSION_GRANTED -> true
-            else -> false
-        }
-    }
 
-    private fun checkLocationPermission(): Boolean {
-        return when (ContextCompat.checkSelfPermission(
-            BlinkyApplication.appContext,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )) {
-            PackageManager.PERMISSION_GRANTED -> true
-            else -> false
-        }
-    }
 
-    fun hasPermission(permissionType: String): Boolean {
-        return ContextCompat.checkSelfPermission(BlinkyApplication.appContext, permissionType) ==
-                PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun setUpAdapter() {
-        BluetoothService.scanResultAdapter =
-            ScanResultAdapter(BluetoothService.scanResults, ::onScanResultClick)
-        setupRecyclerScanView()
-    }
-
-    private fun setupRecyclerScanView() {
-        binding.scanRecycler.apply {
-            adapter = BluetoothService.scanResultAdapter
-            layoutManager = LinearLayoutManager(
-                this@MainActivity,
-                RecyclerView.VERTICAL,
-                false
-            )
-            isNestedScrollingEnabled = false
-        }
-        val animator = binding.scanRecycler.itemAnimator
-        if (animator is SimpleItemAnimator) {
-            animator.supportsChangeAnimations = false
-        }
-    }
 
     private fun onScanResultClick(scanResult: ScanResult) {
         BluetoothService.stopScan()
         isScanning = false
         isConnected = false
         deviceIsSelected = true
-        setDeviceToConnect(scanResult)
+        //setDeviceToConnect(scanResult)
+        //navigateToAnother fragment
     }
 
     private fun String.toast() {

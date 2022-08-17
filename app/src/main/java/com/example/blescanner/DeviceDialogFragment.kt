@@ -5,12 +5,9 @@ import android.app.Dialog
 import android.bluetooth.BluetoothDevice
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
-import com.example.blescanner.BluetoothService.bluetoothDevice
-import com.example.blescanner.BluetoothService.listOfCharacteristic
-import com.example.blescanner.BluetoothService.listOfServices
-import com.example.blescanner.BluetoothService.readDiodeStatus
 import com.example.blescanner.databinding.DeviceServiceBinding
 
 
@@ -18,11 +15,19 @@ class DeviceDialogFragment : DialogFragment() {
 
     private var _binding: DeviceServiceBinding? = null
     private val binding get() = _binding!!
-    private val sharedPref =
-        BlinkyApplication.appContext.getSharedPreferences("SharedPreferences", 0)
+    private val sharedPref by lazy {
+        requireContext().getSharedPreferences("Favorites bluetooth devices", 0)
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         _binding = DeviceServiceBinding.inflate(LayoutInflater.from(context))
+
+        return AlertDialog.Builder(requireActivity()).setView(binding.root).create()
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         binding.apply {
             device.text = bluetoothDevice.name + " " + bluetoothDevice.address
             servicesList.text = listOfServices.toString()
@@ -41,12 +46,6 @@ class DeviceDialogFragment : DialogFragment() {
                 favorite.setImageResource(setIcon())
             }
         }
-        return AlertDialog.Builder(requireActivity()).setView(binding.root).create()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
     private fun setIcon(): Int {
@@ -74,6 +73,11 @@ class DeviceDialogFragment : DialogFragment() {
             commit()
         }
         Toast.makeText(requireContext(), "Delete from favorite", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
 

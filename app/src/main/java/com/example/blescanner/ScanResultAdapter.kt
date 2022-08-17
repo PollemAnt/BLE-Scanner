@@ -12,10 +12,8 @@ import kotlin.math.pow
 class ScanResultAdapter(
     private var scanResult: List<ScanResult>,
     val onItemClicked: (ScanResult) -> Unit
-) :
-    RecyclerView.Adapter<ScanResultAdapter.ScanViewHolder>() {
+) : RecyclerView.Adapter<ScanResultAdapter.ScanViewHolder>() {
 
-    var selectedPositon: Int? = null
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ScanViewHolder {
         return ScanViewHolder.from(parent)
     }
@@ -25,18 +23,13 @@ class ScanResultAdapter(
         holder.bind(currentItem)
         holder.itemView.setOnClickListener {
             onItemClicked(currentItem)
-            selectedPositon = position
-            notifyDataSetChanged()
+
         }
-        if (selectedPositon == position)
-            holder.itemView.setBackgroundColor(Color.parseColor("#bcbcbc"))
-        else
-            holder.itemView.setBackgroundColor(Color.parseColor("white"))
     }
 
     override fun getItemCount(): Int = scanResult.size
 
-    fun setData(scans: MutableList<ScanResult>) {
+    fun setData(scans: List<ScanResult>) {
         scanResult = scans
         notifyDataSetChanged()
     }
@@ -69,12 +62,10 @@ class ScanResultAdapter(
         companion object {
             fun from(parent: ViewGroup): ScanViewHolder {
                 val layoutInflater = LayoutInflater.from(parent.context)
-                val binding =
-                    ScanResultLayoutBinding.inflate(layoutInflater, parent, false)
+                val binding = ScanResultLayoutBinding.inflate(layoutInflater, parent, false)
                 return ScanViewHolder(binding)
             }
         }
     }
-
 
 }
