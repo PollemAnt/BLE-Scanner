@@ -7,7 +7,7 @@
     <string name="clear_list">Clear</string>
     <string name="select">Select</string>
     <string name="connect">Connect</string>
-    <string name="get_info">Get info</string>
+    <string name="show_info">Show info</string>
     <string name="disconnect">Disconnect</string>
     <string name="store">Store</string>
     <string name="unknown_service">Unknown_service</string>
