@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -43,6 +44,14 @@ class MainActivity : AppCompatActivity() {
 
     private val isCoarseLocationPermissionGranted
         get() = hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+
+    private val isBluetoothPermissionGranted
+        get() = hasPermission(Manifest.permission.BLUETOOTH)
+
+    private val isBluetoothScanPermissionGranted
+        get() = hasPermission(Manifest.permission.BLUETOOTH_SCAN)
+
+    var bluetoothScanPermissionState: Boolean? = null
 
     private val isLocationOn
         get() = isLocationEnabled(this)
@@ -122,7 +131,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions() {
-        if (isLocationPermissionGranted && isCoarseLocationPermissionGranted) {
+
+        bluetoothScanPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            isBluetoothScanPermissionGranted
+        else
+            true
+
+        if (isLocationPermissionGranted && isCoarseLocationPermissionGranted && isBluetoothPermissionGranted && bluetoothScanPermissionState!!) {
             if (isLocationOn && BluetoothService.isEnabled()) {
                 isScanning = if (!isScanning) {
                     clearScan()
@@ -141,21 +156,31 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             if (!isLocationPermissionGranted or !isCoarseLocationPermissionGranted) requestLocationPermission()
+            else if (!isBluetoothScanPermissionGranted or !isBluetoothPermissionGranted) requestBluetoothPermission()
         }
     }
+
+    private val requestBluetoothScanConnectPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
 
     private fun clearScan() {
         scanResultAdapter.setData(mutableListOf())
     }
 
-    private fun isLocationEnabled(context: Context): Boolean {
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        return LocationManagerCompat.isLocationEnabled(locationManager)
-    }
-
     private fun requestTurnBluetoothOn() {
         val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
         bluetoothTurnOnRequest.launch(intent)
+    }
+
+    private fun requestBluetoothPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            requestBluetoothScanConnectPermissions.launch(
+                arrayOf(
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                )
+            )
+        }
     }
 
     private fun requestTurnLocationOn() {
@@ -195,6 +220,11 @@ class MainActivity : AppCompatActivity() {
         BluetoothService.setDeviceToConnect(device)
         //navigateToAnother fragment
         deviceFragment.show(supportFragmentManager, "DeviceDialogFragment")
+    }
+
+    private fun isLocationEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return LocationManagerCompat.isLocationEnabled(locationManager)
     }
 
     private fun String.toast() {
