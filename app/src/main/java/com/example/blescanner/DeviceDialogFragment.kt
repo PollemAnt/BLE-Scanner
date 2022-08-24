@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import com.example.blescanner.databinding.DeviceFragmentBinding
@@ -12,129 +13,154 @@ import com.example.blescanner.databinding.DeviceFragmentBinding
 class DeviceDialogFragment : DialogFragment() {
     private var _binding: DeviceFragmentBinding? = null
     private val binding get() = _binding!!
-    private val visible = 0x00000000
-    private val invisible = 0x00000004
+
     private var isDiodeOnOnClickValue = false
     private var areListsShown = false
+
     private val favoriteSharedPref by lazy {
         requireContext().getSharedPreferences("Favorites bluetooth devices", 0)
     }
+
+    //TEMPORARY
+    private val meshDialogFragment = MeshDialogFragment()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         _binding =
             DeviceFragmentBinding.inflate(LayoutInflater.from(context))
 
-        BluetoothService.isFragmentReadyToShow.observe(this) { isFragmentReadyToShow ->
-            if (isFragmentReadyToShow) {
-                binding.progressCircular.visibility = invisible
-                areListsShown = false
-                showContents()
-            }
-            BluetoothService.isDiodeOn.observe(this) { isDiodeOnStartValue ->
-                isDiodeOnOnClickValue = isDiodeOnStartValue
+        setImageBasedOnObserveVariables()
+        checkIsFragmentReadyToShow()
 
-                if (isDiodeOnStartValue)
-                    binding.ledImageview.setImageResource(R.drawable.led_on)
-                else
-                    binding.ledImageview.setImageResource(R.drawable.led_off)
-            }
-
-            BluetoothService.isButtonPressed.observe(this) { isButtonPressed ->
-
-                if (isButtonPressed)
-                    binding.buttonImageview.setImageResource(R.drawable.ic_baseline_radio_button_checked_24)
-                else
-                    binding.buttonImageview.setImageResource(R.drawable.ic_baseline_radio_button_unchecked_24)
-            }
-        }
         return AlertDialog.Builder(
             requireActivity()
         ).setView(binding.root).create()
     }
 
+    private fun setImageBasedOnObserveVariables() {
+        BluetoothService.isDiodeOn.observe(this) { isDiodeOnStartValue ->
+            isDiodeOnOnClickValue = isDiodeOnStartValue
+
+            if (isDiodeOnStartValue)
+                binding.imageviewLed.setImageResource(R.drawable.ic_led_on)
+            else
+                binding.imageviewLed.setImageResource(R.drawable.ic_led_off)
+        }
+
+        BluetoothService.isButtonPressed.observe(this) { isButtonPressed ->
+
+            if (isButtonPressed)
+                binding.imageviewButtonState.setImageResource(R.drawable.ic_button_pressed)
+            else
+                binding.imageviewButtonState.setImageResource(R.drawable.ic_button_unpressed)
+        }
+    }
+
+    private fun checkIsFragmentReadyToShow() {
+        BluetoothService.isFragmentReadyToShow.observe(this) { isFragmentReadyToShow ->
+            if (isFragmentReadyToShow) {
+                binding.progressCircular.visibility = View.INVISIBLE
+                areListsShown = false
+                showContents()
+            }
+        }
+    }
+
     private fun showContents() {
         setContentsVisible()
+        setOnClickListeners()
         binding.apply {
-            device.text =
-                BluetoothService.selectedDevice!!.name + " " + BluetoothService.selectedDevice!!.address
-
-            showInfoButton.setOnClickListener {
-                Log.v("qwe", "areListsShown ON Click:  $areListsShown")
-                if (areListsShown) {
-                    showInfoButton.text = "Show info"
-                    hideLists()
-                    areListsShown = !areListsShown
-                } else {
-                    showServicesList()
-                    showCharacteristicsList()
-                    showInfoButton.text = "Hide info"
-                    areListsShown = !areListsShown
-                }
-            }
-
-            favoriteImageview.setImageResource(setIcon(favoriteImageview.id))
-
-            ledImageview.setOnClickListener {
-                BluetoothService.diodeControl()
-                ledImageview.setImageResource(setIcon(ledImageview.id))
-            }
-            favoriteImageview.setOnClickListener {
-                if (!isFavorite())
-                    addToFavorite(BluetoothService.selectedDevice!!)
-                else
-                    deleteFromFavorite()
-
-                favoriteImageview.setImageResource(setIcon(favoriteImageview.id))
-            }
+            device.text = getDeviceName() + " " + BluetoothService.selectedDevice!!.address
+            imageviewFavorited.setImageResource(getFavoriteIcon())
         }
     }
 
     private fun setContentsVisible() {
+        binding.layoutBluetoothDevice.visibility = View.VISIBLE
+    }
+
+    private fun setOnClickListeners() {
         binding.apply {
-            ledImageview.visibility = visible
-            buttonImageview.visibility = visible
-            favoriteImageview.visibility = visible
-            fragmentTitle.visibility = visible
-            device.visibility = visible
-            services.visibility = visible
-            servicesList.visibility = visible
-            characteristics.visibility = visible
-            characteristicsList.visibility = visible
-            showInfoButton.visibility = visible
+
+            imageviewLed.setOnClickListener {
+                BluetoothService.diodeControl()
+                imageviewLed.setImageResource(getLedIcon())
+            }
+
+            imageviewFavorited.setOnClickListener {
+                changeFavoriteState()
+            }
+
+            buttonShowInfo.setOnClickListener {
+                if (areListsShown)
+                    hideLists()
+                else
+                    showLists()
+            }
+
+            //TEMPORARY
+            buttonGoToMesh.setOnClickListener {
+                meshDialogFragment.show(parentFragmentManager, "mesh")
+            }
         }
     }
 
-    private fun showCharacteristicsList() {
-        binding.characteristics.text = "Characteristics: "
-        binding.characteristicsList.text =
-            BluetoothService.listOfCharacteristic.toString().drop(1).dropLast(1)
+    private fun getLedIcon(): Int {
+        return if (isDiodeOnOnClickValue) {
+            R.drawable.ic_led_off
+        } else
+            R.drawable.ic_led_on
     }
 
-    private fun showServicesList() {
-        binding.services.text = "Services: "
-        binding.servicesList.text = BluetoothService.listOfServices.toString().drop(1).dropLast(1)
+    private fun changeFavoriteState() {
+        if (!isFavorite())
+            addToFavorite(BluetoothService.selectedDevice!!)
+        else
+            deleteFromFavorite()
+
+        binding.imageviewFavorited.setImageResource(getFavoriteIcon())
+    }
+
+    private fun getFavoriteIcon(): Int {
+        return if (isFavorite())
+            R.drawable.ic_favorited
+        else
+            R.drawable.ic_unfavorited
     }
 
     private fun hideLists() {
         binding.apply {
-            services.text = ""
-            characteristics.text = ""
-            servicesList.text = ""
-            characteristicsList.text = ""
+            buttonShowInfo.text = "Show info"
+            areListsShown = false
+            servicesList.visibility = View.GONE
+            characteristicsList.visibility = View.GONE
         }
     }
 
-    private fun setIcon(id: Int): Int {
-        return if (id == binding.favoriteImageview.id) {
-            if (isFavorite())
-                R.drawable.ic_baseline_favorite_24
-            else
-                R.drawable.ic_baseline_favorite_border_24
-        } else
-            if (isDiodeOnOnClickValue) {
-                R.drawable.led_off
-            } else
-                R.drawable.led_on
+    private fun showLists() {
+        setServicesList()
+        setCharacteristicsList()
+        areListsShown = true
+        binding.apply {
+            servicesList.visibility = View.VISIBLE
+            characteristicsList.visibility = View.VISIBLE
+            buttonShowInfo.text = "Hide info"
+        }
+    }
+
+    private fun setServicesList() {
+        binding.servicesList.text = BluetoothService.listOfServices.toString().drop(1).dropLast(1)
+    }
+
+    private fun setCharacteristicsList() {
+        binding.characteristicsList.text =
+            BluetoothService.listOfCharacteristic.toString().drop(1).dropLast(1)
+    }
+
+    private fun getDeviceName(): String {
+        return if (BluetoothService.selectedDevice!!.name == null)
+            "Unknown"
+        else
+            BluetoothService.selectedDevice!!.name!!
     }
 
     private fun isFavorite(): Boolean {
