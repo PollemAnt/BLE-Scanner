@@ -11,7 +11,7 @@
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_view"
         android:layout_width="match_parent"
-        android:layout_height="110dp"
+        android:layout_height="wrap_content"
         android:layout_marginLeft="18dp"
         android:layout_marginTop="5dp"
         android:layout_marginRight="18dp">
@@ -23,7 +23,7 @@
 
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:layout_width="330dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="10"
                 android:orientation="vertical">
 
@@ -59,21 +59,20 @@
 
             <ImageView
                 android:id="@+id/blinky_logo"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_margin="8dp"
-                android:layout_weight="3"
+                android:layout_gravity="center"
                 android:contentDescription="@string/is_device_blinky_icon"
-                android:src="@drawable/ic_baseline_device_unknown_24" />
+                android:src="@drawable/ic_device_unknown" />
 
             <ImageView
                 android:id="@+id/signal_logo"
-                android:layout_width="40dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
-                android:layout_weight="3"
                 android:contentDescription="@string/signal_strength_icon"
-                android:src="@drawable/ic_network_1_bar" />
+                android:src="@drawable/ic_signal_low" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
     </com.google.android.material.card.MaterialCardView>
