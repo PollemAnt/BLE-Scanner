@@ -58,16 +58,15 @@
             </androidx.appcompat.widget.LinearLayoutCompat>
 
             <ImageView
-                android:id="@+id/blinky_logo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:id="@+id/imageview_blinky_icon"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_margin="8dp"
                 android:layout_gravity="center"
-                android:contentDescription="@string/is_device_blinky_icon"
-                android:src="@drawable/ic_device_unknown" />
+                android:contentDescription="@string/is_device_blinky_icon" />
 
             <ImageView
-                android:id="@+id/signal_logo"
+                android:id="@+id/imageview_signal_icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
