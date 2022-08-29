@@ -1,17 +1,17 @@
 package com.example.blescanner
 
-import android.app.AlertDialog
-import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.DialogFragment
-import com.example.blescanner.databinding.DeviceFragmentBinding
+import androidx.activity.OnBackPressedCallback
+import androidx.fragment.app.Fragment
+import com.example.blescanner.databinding.FragmentDeviceBinding
 
-class DeviceDialogFragment : DialogFragment() {
-    private var _binding: DeviceFragmentBinding? = null
+class DeviceFragment : Fragment() {
+    private var _binding: FragmentDeviceBinding? = null
     private val binding get() = _binding!!
 
     private var isDiodeOnOnClickValue = false
@@ -21,23 +21,35 @@ class DeviceDialogFragment : DialogFragment() {
         requireContext().getSharedPreferences("Favorites bluetooth devices", 0)
     }
 
-    //TEMPORARY
-    private val meshDialogFragment = MeshDialogFragment()
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         _binding =
-            DeviceFragmentBinding.inflate(LayoutInflater.from(context))
+            FragmentDeviceBinding.inflate(inflater)
+
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         setImageBasedOnObserveVariables()
         checkIsFragmentReadyToShow()
 
-        return AlertDialog.Builder(
-            requireActivity()
-        ).setView(binding.root).create()
+        activity?.onBackPressedDispatcher?.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    BluetoothService.onBackPressed()
+                }
+            })
     }
 
     private fun setImageBasedOnObserveVariables() {
-        BluetoothService.isDiodeOn.observe(this) { isDiodeOnStartValue ->
+        BluetoothService.selectedDevice!!.isDiodeOn.observe(viewLifecycleOwner) { isDiodeOnStartValue ->
             isDiodeOnOnClickValue = isDiodeOnStartValue
 
             if (isDiodeOnStartValue)
@@ -46,7 +58,7 @@ class DeviceDialogFragment : DialogFragment() {
                 binding.imageviewLed.setImageResource(R.drawable.ic_led_off)
         }
 
-        BluetoothService.isButtonPressed.observe(this) { isButtonPressed ->
+        BluetoothService.selectedDevice!!.isButtonPressed.observe(viewLifecycleOwner) { isButtonPressed ->
 
             if (isButtonPressed)
                 binding.imageviewButtonState.setImageResource(R.drawable.ic_button_pressed)
@@ -56,7 +68,7 @@ class DeviceDialogFragment : DialogFragment() {
     }
 
     private fun checkIsFragmentReadyToShow() {
-        BluetoothService.isFragmentReadyToShow.observe(this) { isFragmentReadyToShow ->
+        BluetoothService.selectedDevice!!.isFragmentReadyToShow.observe(viewLifecycleOwner) { isFragmentReadyToShow ->
             if (isFragmentReadyToShow) {
                 binding.progressCircular.visibility = View.INVISIBLE
                 areListsShown = false
@@ -70,7 +82,7 @@ class DeviceDialogFragment : DialogFragment() {
         setOnClickListeners()
         binding.apply {
             device.text = getDeviceName() + " " + BluetoothService.selectedDevice!!.address
-            imageviewFavorited.setImageResource(getFavoriteIcon())
+            imageviewFavorite.setImageResource(getFavoriteIcon())
         }
     }
 
@@ -86,7 +98,7 @@ class DeviceDialogFragment : DialogFragment() {
                 imageviewLed.setImageResource(getLedIcon())
             }
 
-            imageviewFavorited.setOnClickListener {
+            imageviewFavorite.setOnClickListener {
                 changeFavoriteState()
             }
 
@@ -95,11 +107,6 @@ class DeviceDialogFragment : DialogFragment() {
                     hideLists()
                 else
                     showLists()
-            }
-
-            //TEMPORARY
-            buttonGoToMesh.setOnClickListener {
-                meshDialogFragment.show(parentFragmentManager, "mesh")
             }
         }
     }
@@ -117,14 +124,34 @@ class DeviceDialogFragment : DialogFragment() {
         else
             deleteFromFavorite()
 
-        binding.imageviewFavorited.setImageResource(getFavoriteIcon())
+        binding.imageviewFavorite.setImageResource(getFavoriteIcon())
+    }
+
+    private fun addToFavorite(bluetoothDevice: BluetoothConnectableDevice) {
+        with(favoriteSharedPref!!.edit()) {
+            putString(bluetoothDevice.address, bluetoothDevice.name)
+            commit()
+        }
+        Toast.makeText(requireContext(), "Add to favorite", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun deleteFromFavorite() {
+        with(favoriteSharedPref!!.edit()) {
+            remove(BluetoothService.selectedDevice!!.address)
+            commit()
+        }
+        Toast.makeText(requireContext(), "Delete from favorite", Toast.LENGTH_SHORT).show()
     }
 
     private fun getFavoriteIcon(): Int {
         return if (isFavorite())
             R.drawable.ic_favorited
         else
-            R.drawable.ic_unfavorited
+            R.drawable.ic_unfavorite
+    }
+
+    private fun isFavorite(): Boolean {
+        return favoriteSharedPref!!.all.contains(BluetoothService.selectedDevice!!.address)
     }
 
     private fun hideLists() {
@@ -161,26 +188,6 @@ class DeviceDialogFragment : DialogFragment() {
             "Unknown"
         else
             BluetoothService.selectedDevice!!.name!!
-    }
-
-    private fun isFavorite(): Boolean {
-        return favoriteSharedPref!!.all.contains(BluetoothService.selectedDevice!!.address)
-    }
-
-    private fun addToFavorite(bluetoothDevice: BluetoothConnectableDevice) {
-        with(favoriteSharedPref!!.edit()) {
-            putString(bluetoothDevice.address, bluetoothDevice.name)
-            commit()
-        }
-        Toast.makeText(requireContext(), "Add to favorite", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun deleteFromFavorite() {
-        with(favoriteSharedPref!!.edit()) {
-            remove(BluetoothService.selectedDevice!!.address)
-            commit()
-        }
-        Toast.makeText(requireContext(), "Delete from favorite", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {
