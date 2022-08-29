@@ -10,16 +10,13 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
-import androidx.databinding.DataBindingUtil
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.SimpleItemAnimator
 import com.example.blescanner.databinding.ActivityMainBinding
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -28,14 +25,14 @@ import com.google.android.gms.tasks.Task
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val deviceFragment = DeviceDialogFragment()
-    private val scanResultAdapter =
-        ScanResultAdapter(emptyList(), ::onBluetoothConnectableDeviceClick)
+    private val bluetoothDeviceScannerFragment = BluetoothDeviceScannerFragment()
+    private val dialogFragment = DeviceFragment()
+    private val meshFragment = MeshFragment()
 
     private var isScanning = false
         set(value) {
             field = value
-            binding.startStopScanButton.text =
+            binding.buttonStartStopScan.text =
                 if (value) resources.getString(R.string.stop_scan) else resources.getString(R.string.start_scan)
         }
 
@@ -51,13 +48,16 @@ class MainActivity : AppCompatActivity() {
     private val isBluetoothScanPermissionGranted
         get() = hasPermission(Manifest.permission.BLUETOOTH_SCAN)
 
-    var bluetoothScanPermissionState: Boolean? = null
+    private var bluetoothScanPermissionState: Boolean? = null
 
     private val isLocationOn
         get() = isLocationEnabled(this)
 
     private val bluetoothTurnOnRequest =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+
+    private val requestBluetoothScanConnectPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -68,66 +68,98 @@ class MainActivity : AppCompatActivity() {
             permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
             }
             else -> {
-                "No location access granted!".toast()
+                Toast.makeText(this@MainActivity, "No location access granted!", Toast.LENGTH_SHORT)
+                    .show()
                 Log.v("permission", "locationPermissionRequest: No location access granted.")
             }
         }
     }
 
+    private fun hasPermission(permissionType: String): Boolean {
+        return ContextCompat.checkSelfPermission(this, permissionType) ==
+                PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun isLocationEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return LocationManagerCompat.isLocationEnabled(locationManager)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
-        setupRecyclerScanView()
         setUpViews()
-
-        BluetoothService.connectableDevices.observe(this) { scanResults ->
-            scanResultAdapter.setData(scanResults)
-        }
-        scrollToTopOfRecycleList()
     }
 
     private fun setUpViews() {
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setIsScanningValue()
+        setFragmentContainerView()
         binding.apply {
-            lifecycleOwner = this@MainActivity
-            executePendingBindings()
-            startStopScanButton.setOnClickListener {
+            buttonStartStopScan.setOnClickListener {
                 checkPermissions()
             }
         }
-    }
-
-    private fun setupRecyclerScanView() {
-        binding.scanRecycler.apply {
-            adapter = scanResultAdapter
-            layoutManager = LinearLayoutManager(
-                this@MainActivity,
-                RecyclerView.VERTICAL,
-                false
-            )
-        }
-        val animator = binding.scanRecycler.itemAnimator
-        if (animator is SimpleItemAnimator) {
-            animator.supportsChangeAnimations = false
-        }
-    }
-
-    private fun scrollToTopOfRecycleList() {
-        scanResultAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
-            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-                (binding.scanRecycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
-                    itemCount - 1,
-                    0
-                )
+        binding.apply {
+            buttonGoBack.setOnClickListener {
+                showScannerFragment()
             }
-        })
+        }
     }
 
-    private fun hasPermission(permissionType: String): Boolean {
-        return ContextCompat.checkSelfPermission(this, permissionType) ==
-                PackageManager.PERMISSION_GRANTED
+    private fun setIsScanningValue() {
+        BluetoothService.isScanning.observe(this) { value ->
+            isScanning = value
+        }
+    }
+
+    private fun setFragmentContainerView() {
+        showScannerFragment()
+        BluetoothService.typeOfSelectedDevice.observe(this) { deviceType ->
+            Log.v("qwe", deviceType.toString())
+            when (deviceType) {
+                "Blinky" -> showDeviceFragment()
+                "Mesh" -> showMeshFragment()
+                "Unknown" -> deviceIsUnknown()
+                null -> showScannerFragment()
+            }
+        }
+    }
+
+    private fun showScannerFragment() {
+        Log.v("qwe", "showScannerFragment")
+        binding.buttonGoBack.visibility = View.GONE
+        binding.buttonStartStopScan.visibility = View.VISIBLE
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragment_container_view, bluetoothDeviceScannerFragment)
+            commit()
+        }
+    }
+
+    private fun showDeviceFragment() {
+        binding.buttonGoBack.visibility = View.VISIBLE
+        binding.buttonStartStopScan.visibility = View.GONE
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragment_container_view, dialogFragment)
+            commit()
+        }
+    }
+
+    private fun showMeshFragment() {
+        binding.buttonGoBack.visibility = View.VISIBLE
+        binding.buttonStartStopScan.visibility = View.GONE
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragment_container_view, meshFragment)
+            commit()
+        }
+    }
+
+    private fun deviceIsUnknown() {
+        Toast.makeText(this@MainActivity, "Select Blinky or Mesh device!", Toast.LENGTH_SHORT)
+            .show()
+        BluetoothService.startScan()
     }
 
     private fun checkPermissions() {
@@ -140,7 +172,7 @@ class MainActivity : AppCompatActivity() {
         if (isLocationPermissionGranted && isCoarseLocationPermissionGranted && isBluetoothPermissionGranted && bluetoothScanPermissionState!!) {
             if (isLocationOn && BluetoothService.isEnabled()) {
                 isScanning = if (!isScanning) {
-                    clearScan()
+                    BluetoothService.clearScanList()
                     BluetoothService.startScan()
                     true
                 } else {
@@ -157,29 +189,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             if (!isLocationPermissionGranted or !isCoarseLocationPermissionGranted) requestLocationPermission()
             else if (!isBluetoothScanPermissionGranted or !isBluetoothPermissionGranted) requestBluetoothPermission()
-        }
-    }
-
-    private val requestBluetoothScanConnectPermissions =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
-
-    private fun clearScan() {
-        scanResultAdapter.setData(mutableListOf())
-    }
-
-    private fun requestTurnBluetoothOn() {
-        val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-        bluetoothTurnOnRequest.launch(intent)
-    }
-
-    private fun requestBluetoothPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            requestBluetoothScanConnectPermissions.launch(
-                arrayOf(
-                    Manifest.permission.BLUETOOTH_SCAN,
-                    Manifest.permission.BLUETOOTH_CONNECT
-                )
-            )
         }
     }
 
@@ -205,6 +214,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun requestTurnBluetoothOn() {
+        val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+        bluetoothTurnOnRequest.launch(intent)
+    }
+
     private fun requestLocationPermission() {
         locationPermissionRequest.launch(
             arrayOf(
@@ -214,23 +228,16 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun onBluetoothConnectableDeviceClick(device: BluetoothConnectableDevice) {
-        BluetoothService.stopScan()
-        isScanning = false
-        BluetoothService.setDeviceToConnect(device)
-        //navigateToAnother fragment
-        deviceFragment.show(supportFragmentManager, "DeviceDialogFragment")
+    private fun requestBluetoothPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            requestBluetoothScanConnectPermissions.launch(
+                arrayOf(
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                )
+            )
+        }
     }
-
-    private fun isLocationEnabled(context: Context): Boolean {
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        return LocationManagerCompat.isLocationEnabled(locationManager)
-    }
-
-    private fun String.toast() {
-        Toast.makeText(this@MainActivity, this, Toast.LENGTH_SHORT).show()
-    }
-
 }
 
 
