@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.blescanner.databinding.ScanResultItemBinding
+import com.example.blescanner.databinding.ItemScanResultBinding
 import kotlin.math.pow
 
 class BluetoothConnectableDeviceAdapter(
@@ -30,19 +30,28 @@ class BluetoothConnectableDeviceAdapter(
         }
     }
 
-    class BluetoothConnectableDeviceViewHolder(private val binding: ScanResultItemBinding) :
+    class BluetoothConnectableDeviceViewHolder(private val binding: ItemScanResultBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(bluetoothConnectableDevice: BluetoothConnectableDevice) {
             with(binding) {
                 this.result = bluetoothConnectableDevice.scanResult
 
+                imageviewBlinkyIcon.setImageResource(getDeviceIcon(bluetoothConnectableDevice))
+
                 val distance = calculateDistance(result)
                 deviceDistance.text = distance.toString()
-
-                signalLogo.setImageResource(getSignalIcon(distance))
-                blinkyLogo.setImageResource(getDeviceIcon(bluetoothConnectableDevice.name))
+                imageviewSignalIcon.setImageResource(getSignalIcon(distance))
             }
+        }
+
+        private fun getDeviceIcon(bluetoothConnectableDevice: BluetoothConnectableDevice): Int {
+            return if (bluetoothConnectableDevice.name?.contains("Blinky") == true)
+                R.drawable.image_blinky
+            else if (bluetoothConnectableDevice.scanResult.scanRecord?.serviceUuids?.get(0) == Constants.MESH_SERVICE_PARCEL_UUID)
+                R.drawable.image_silicon_labs
+            else
+                R.drawable.ic_blank
         }
 
         private fun calculateDistance(scanResult: ScanResult?): Double =
@@ -55,17 +64,10 @@ class BluetoothConnectableDeviceAdapter(
             else -> R.drawable.ic_signal_low
         }
 
-        private fun getDeviceIcon(name: String?): Int {
-            return if (name?.contains("Blinky") == true)
-                R.drawable.ic_blinky
-            else
-                R.drawable.ic_device_unknown
-        }
-
         companion object {
             fun from(parent: ViewGroup): BluetoothConnectableDeviceViewHolder {
                 val layoutInflater = LayoutInflater.from(parent.context)
-                val binding = ScanResultItemBinding.inflate(layoutInflater, parent, false)
+                val binding = ItemScanResultBinding.inflate(layoutInflater, parent, false)
                 return BluetoothConnectableDeviceViewHolder(binding)
             }
         }
