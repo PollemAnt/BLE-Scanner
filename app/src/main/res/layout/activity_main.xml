@@ -23,4 +23,9 @@
         android:text="@string/start_scan"
         app:layout_constraintBottom_toTopOf="@id/recycler_bluetooth_devices" />
 
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragment_container_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"></androidx.fragment.app.FragmentContainerView>
+
 </androidx.appcompat.widget.LinearLayoutCompat>
