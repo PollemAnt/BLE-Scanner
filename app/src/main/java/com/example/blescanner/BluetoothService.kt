@@ -1,28 +1,24 @@
 package com.example.blescanner
 
 import android.Manifest
-import android.bluetooth.*
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattService
+import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.siliconlab.bluetoothmesh.adk.connectable_device.ConnectableDeviceWriteCallback
-import java.util.*
 
 
 object BluetoothService {
 
-    lateinit var bluetoothGatt: BluetoothGatt
     private val bluetoothManager =
         getSystemService(
             BlinkyApplication.appContext,
@@ -35,24 +31,18 @@ object BluetoothService {
     lateinit var listOfServices: List<BluetoothGattService>
     var listOfCharacteristic = mutableListOf<BluetoothGattCharacteristic>()
 
-    lateinit var diodeControlCharacteristic: BluetoothGattCharacteristic
-    lateinit var buttonStateCharacteristic: BluetoothGattCharacteristic
-
     var selectedDevice: BluetoothConnectableDevice? = null
         private set
-
-    private val _isButtonPressed: MutableLiveData<Boolean> = MutableLiveData()
-    val isButtonPressed: LiveData<Boolean> = _isButtonPressed
 
     private val _connectableDevices: MutableLiveData<List<BluetoothConnectableDevice>> =
         MutableLiveData(emptyList())
     val connectableDevices: LiveData<List<BluetoothConnectableDevice>> = _connectableDevices
 
-    private val _isDiodeOn: MutableLiveData<Boolean> = MutableLiveData()
-    val isDiodeOn: LiveData<Boolean> = _isDiodeOn
+    private val _typeOfSelectedDevice: MutableLiveData<String?> = MutableLiveData()
+    val typeOfSelectedDevice: LiveData<String?> = _typeOfSelectedDevice
 
-    private val _isFragmentReadyToShow: MutableLiveData<Boolean> = MutableLiveData()
-    val isFragmentReadyToShow: LiveData<Boolean> = _isFragmentReadyToShow
+    private val _isScanning: MutableLiveData<Boolean> = MutableLiveData()
+    val isScanning: LiveData<Boolean> = _isScanning
 
     private val scanSettings = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         ScanSettings.Builder()
@@ -101,6 +91,7 @@ object BluetoothService {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             bluetoothScanner.startScan(null, scanSettings, scanCallback)
+            _isScanning.value = true
         }
     }
 
@@ -111,131 +102,43 @@ object BluetoothService {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             bluetoothScanner.stopScan(scanCallback)
+            _isScanning.value = false
         }
+    }
+
+    fun clearScanList() {
+        _connectableDevices.value = emptyList()
     }
 
     fun setDeviceToConnect(bluetoothConnectableDevice: BluetoothConnectableDevice) {
         selectedDevice = bluetoothConnectableDevice
-        _isFragmentReadyToShow.value = false
-        bluetoothConnectableDevice.connect()
+        _typeOfSelectedDevice.value = checkDeviceType()
+        if (checkDeviceType() != "Unknown")
+            connectToSelectedDevice()
     }
 
-    val bluetoothGattCallback = object : BluetoothGattCallback() {
-        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            Log.v("qwe", "Start  onConnectionStateChange ")
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.v("qwe", "Successfully connected to the GATT Server")
-                val discoverServices = gatt.discoverServices()
-                Log.v("qwe", "Are services discover ? = $discoverServices")
-                Log.v("qwe", "Connection with: " + gatt.device.name + " " + gatt.device.address)
+    private fun checkDeviceType(): String {
+        val deviceType: String = if (selectedDevice!!.name?.contains("Blinky") == true) {
+            "Blinky"
+        } else if (selectedDevice!!.scanResult.scanRecord?.serviceUuids?.get(0) == Constants.MESH_SERVICE_PARCEL_UUID)
+            "Mesh"
+        else "Unknown"
 
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.v("qwe", "disconnected from the GATT Server")
-            }
-        }
-
-        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.v("qwe", "onServicesDiscovered GATT_SUCCESS")
-                listOfServices = gatt?.services as List<BluetoothGattService>
-                Log.v("list", "listOfServices:$listOfServices")
-                createListOfCharacteristic(listOfServices)
-                properUUID()
-                readDiodeStatus()
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(BlinkyApplication.appContext, "Connected", Toast.LENGTH_LONG)
-                        .show()
-                }
-            } else {
-                Log.v("qwe", "onServicesDiscovered received: $status")
-            }
-        }
-
-        override fun onCharacteristicChanged(
-            gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?
-        ) {
-            if (characteristic == buttonStateCharacteristic) {
-                _isButtonPressed.postValue(characteristic.value.contentToString() == "[1]")
-                super.onCharacteristicChanged(gatt, characteristic)
-            }
-        }
-
-        override fun onCharacteristicRead(
-            gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?,
-            status: Int
-        ) {
-            if (characteristic == diodeControlCharacteristic) {
-                _isDiodeOn.postValue(characteristic.value.contentToString() == "[1]")
-            }
-            setNotificationDeviceButtonState()
-            super.onCharacteristicRead(gatt, characteristic, status)
-        }
+        return deviceType
     }
 
-    private fun createListOfCharacteristic(gattServices: List<BluetoothGattService>) {
-        gattServices.forEach { gattService ->
-            val gattCharacteristics = gattService.characteristics
-            gattCharacteristics.forEach { gattCharacteristic ->
-                listOfCharacteristic.add(gattCharacteristic)
-            }
-        }
+    private fun connectToSelectedDevice() {
+        selectedDevice!!.connect()
     }
 
-    private fun properUUID() {
-        diodeControlCharacteristic = listOfServices[3].characteristics[0]
-        buttonStateCharacteristic = listOfServices[3].characteristics[1]
-    }
-
-    private fun setNotificationDeviceButtonState() {
-        bluetoothGatt.setCharacteristicNotification(buttonStateCharacteristic, true)
-
-        val descriptor = buttonStateCharacteristic.descriptors[0]
-        descriptor.value = (BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-        bluetoothGatt.writeDescriptor(descriptor)
-    }
-
-    fun readDiodeStatus() {
-        bluetoothGatt.readCharacteristic(diodeControlCharacteristic)
-        _isFragmentReadyToShow.postValue(true)
-    }
-
-    fun diodeControl() {
-        _isDiodeOn.value = (diodeControlCharacteristic.value.contentToString() == "[1]")
-        val byteArray = if (_isDiodeOn.value!!) byteArrayOf(0x00) else byteArrayOf(0x01)
-        selectedDevice?.writeData(
-            listOfServices[3].uuid,
-            diodeControlCharacteristic.uuid,
-            byteArray,
-            object : ConnectableDeviceWriteCallback {
-
-                override fun onWrite(p0: UUID?, p1: UUID?) {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(
-                            BlinkyApplication.appContext,
-                            "Led is " + if (_isDiodeOn.value!!) "off" else "on",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-
-                override fun onFailed(p0: UUID?, p1: UUID?) {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(
-                            BlinkyApplication.appContext,
-                            "Led turn " + if (_isDiodeOn.value!!) "on" else "off" + " failed",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            }
-        )
+    fun onBackPressed() {
+        _typeOfSelectedDevice.value = null
     }
 
     fun disconnectOnFragmentDestroy() {
         listOfCharacteristic.clear()
-        selectedDevice?.disconnect()
+        _typeOfSelectedDevice.value = null
+        selectedDevice!!.disconnect()
         selectedDevice = null
     }
 
@@ -244,8 +147,17 @@ object BluetoothService {
     }
 
     fun isInitialized(): Boolean {
-        return this::bluetoothGatt.isInitialized
+        return selectedDevice!!.isInitialized()
     }
+
+    fun diodeControl() {
+        selectedDevice!!.setValueToControlDiode()
+    }
+
+    fun test() {
+        // test mesh things..
+    }
+
 }
 
 
