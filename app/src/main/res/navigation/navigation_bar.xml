@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation"
+    app:startDestination="@id/layout_network">
+
+    <fragment
+        android:id="@id/layout_network"
+        android:name="com.example.blescanner.NetworkFragment"
+        android:label="fragment_first"
+        tools:layout="@layout/fragment_network" />
+    <fragment
+        android:id="@+id/fragment_scanner"
+        android:name="com.example.blescanner.BluetoothDeviceScannerFragment"
+        android:label="fragment_second"
+        tools:layout="@layout/fragment_recycle_list_of_devices" />
+    <fragment
+        android:id="@+id/fragment_mesh"
+        android:name="com.example.blescanner.MeshFragment"
+        android:label="fragment_third"
+        tools:layout="@layout/fragment_mesh" />
+</navigation>
