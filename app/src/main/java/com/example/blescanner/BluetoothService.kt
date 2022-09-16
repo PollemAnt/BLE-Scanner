@@ -16,7 +16,6 @@ import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
-
 object BluetoothService {
 
     private val bluetoothManager =
@@ -33,6 +32,8 @@ object BluetoothService {
 
     var selectedDevice: BluetoothConnectableDevice? = null
         private set
+    var connectedDevice: BluetoothConnectableDevice? = null
+        private set
 
     private val _connectableDevices: MutableLiveData<List<BluetoothConnectableDevice>> =
         MutableLiveData(emptyList())
@@ -46,16 +47,16 @@ object BluetoothService {
 
     private val scanSettings = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
             .setMatchMode(ScanSettings.MATCH_MODE_STICKY)
             .build()
     } else {
         ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
             .build()
     }
 
-    val scanCallback = object : ScanCallback() {
+    private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             super.onScanResult(callbackType, result)
             if (result != null && ContextCompat.checkSelfPermission(
@@ -120,7 +121,10 @@ object BluetoothService {
     private fun checkDeviceType(): String {
         val deviceType: String = if (selectedDevice!!.name?.contains("Blinky") == true) {
             "Blinky"
-        } else if (selectedDevice!!.scanResult.scanRecord?.serviceUuids?.get(0) == Constants.MESH_SERVICE_PARCEL_UUID)
+        } else if (selectedDevice!!.scanResult.scanRecord?.serviceUuids?.get(0) == Constants.MESH_SERVICE_PARCEL_UUID || selectedDevice!!.scanResult.scanRecord?.serviceUuids?.get(
+                0
+            ) == Constants.MESH_SILICON_LABS_PARCEL_UUID
+        )
             "Mesh"
         else "Unknown"
 
@@ -128,6 +132,8 @@ object BluetoothService {
     }
 
     private fun connectToSelectedDevice() {
+        connectedDevice?.disconnect()
+        connectedDevice = selectedDevice
         selectedDevice!!.connect()
     }
 
@@ -135,29 +141,20 @@ object BluetoothService {
         _typeOfSelectedDevice.value = null
     }
 
-    fun disconnectOnFragmentDestroy() {
+    fun callDisconnect() {
         listOfCharacteristic.clear()
+        connectedDevice!!.disconnect()
+        connectedDevice = null
         _typeOfSelectedDevice.value = null
-        selectedDevice!!.disconnect()
-        selectedDevice = null
     }
 
-    fun isEnabled(): Boolean {
-        return bluetoothManager.adapter.isEnabled
-    }
+    fun isEnabled(): Boolean = bluetoothManager.adapter.isEnabled
 
-    fun isInitialized(): Boolean {
-        return selectedDevice!!.isInitialized()
-    }
+    fun isInitialized(): Boolean = connectedDevice!!.isInitialized()
 
     fun diodeControl() {
-        selectedDevice!!.setValueToControlDiode()
+        connectedDevice!!.setValueToControlDiode()
     }
-
-    fun test() {
-        // test mesh things..
-    }
-
 }
 
 
