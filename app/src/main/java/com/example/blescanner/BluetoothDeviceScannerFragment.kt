@@ -72,4 +72,9 @@ class BluetoothDeviceScannerFragment : Fragment() {
             }
         })
     }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        BluetoothService.stopScan()
+    }
 }
