@@ -48,7 +48,10 @@ class BluetoothConnectableDeviceAdapter(
         private fun getDeviceIcon(bluetoothConnectableDevice: BluetoothConnectableDevice): Int {
             return if (bluetoothConnectableDevice.name?.contains("Blinky") == true)
                 R.drawable.image_blinky
-            else if (bluetoothConnectableDevice.scanResult.scanRecord?.serviceUuids?.get(0) == Constants.MESH_SERVICE_PARCEL_UUID)
+            else if (bluetoothConnectableDevice.scanResult.scanRecord?.serviceUuids?.get(0) == Constants.MESH_SERVICE_PARCEL_UUID || bluetoothConnectableDevice.scanResult.scanRecord?.serviceUuids?.get(
+                    0
+                ) == Constants.MESH_SILICON_LABS_PARCEL_UUID
+            )
                 R.drawable.image_silicon_labs
             else
                 R.drawable.ic_blank
