@@ -1,7 +1,6 @@
 package com.example.blescanner
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +13,6 @@ class DeviceFragment : Fragment() {
     private var _binding: FragmentDeviceBinding? = null
     private val binding get() = _binding!!
 
-    private var isDiodeOnOnClickValue = false
     private var areListsShown = false
 
     private val favoriteSharedPref by lazy {
@@ -26,7 +24,6 @@ class DeviceFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding =
             FragmentDeviceBinding.inflate(inflater)
 
@@ -35,10 +32,12 @@ class DeviceFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        setImageBasedOnObserveVariables()
         checkIsFragmentReadyToShow()
+        setImageBasedOnObserveVariables()
+        onBackPressed()
+    }
 
+    private fun onBackPressed() {
         activity?.onBackPressedDispatcher?.addCallback(
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
@@ -49,8 +48,7 @@ class DeviceFragment : Fragment() {
     }
 
     private fun setImageBasedOnObserveVariables() {
-        BluetoothService.selectedDevice!!.isDiodeOn.observe(viewLifecycleOwner) { isDiodeOnStartValue ->
-            isDiodeOnOnClickValue = isDiodeOnStartValue
+        BluetoothService.connectedDevice?.isDiodeOn?.observe(viewLifecycleOwner) { isDiodeOnStartValue ->
 
             if (isDiodeOnStartValue)
                 binding.imageviewLed.setImageResource(R.drawable.ic_led_on)
@@ -58,8 +56,7 @@ class DeviceFragment : Fragment() {
                 binding.imageviewLed.setImageResource(R.drawable.ic_led_off)
         }
 
-        BluetoothService.selectedDevice!!.isButtonPressed.observe(viewLifecycleOwner) { isButtonPressed ->
-
+        BluetoothService.connectedDevice?.isButtonPressed?.observe(viewLifecycleOwner) { isButtonPressed ->
             if (isButtonPressed)
                 binding.imageviewButtonState.setImageResource(R.drawable.ic_button_pressed)
             else
@@ -68,8 +65,10 @@ class DeviceFragment : Fragment() {
     }
 
     private fun checkIsFragmentReadyToShow() {
-        BluetoothService.selectedDevice!!.isFragmentReadyToShow.observe(viewLifecycleOwner) { isFragmentReadyToShow ->
+        BluetoothService.connectedDevice?.isFragmentReadyToShow?.observe(viewLifecycleOwner) { isFragmentReadyToShow ->
             if (isFragmentReadyToShow) {
+                BluetoothService.connectedDevice!!.readDiodeStatus()
+                binding.isDeviceConnected.visibility = View.INVISIBLE
                 binding.progressCircular.visibility = View.INVISIBLE
                 areListsShown = false
                 showContents()
@@ -81,7 +80,7 @@ class DeviceFragment : Fragment() {
         setContentsVisible()
         setOnClickListeners()
         binding.apply {
-            device.text = getDeviceName() + " " + BluetoothService.selectedDevice!!.address
+            device.text = getDeviceName() + " " + BluetoothService.connectedDevice!!.address
             imageviewFavorite.setImageResource(getFavoriteIcon())
         }
     }
@@ -95,11 +94,14 @@ class DeviceFragment : Fragment() {
 
             imageviewLed.setOnClickListener {
                 BluetoothService.diodeControl()
-                imageviewLed.setImageResource(getLedIcon())
             }
 
             imageviewFavorite.setOnClickListener {
                 changeFavoriteState()
+            }
+
+            buttonDisconnect.setOnClickListener {
+                BluetoothService.callDisconnect()
             }
 
             buttonShowInfo.setOnClickListener {
@@ -111,16 +113,9 @@ class DeviceFragment : Fragment() {
         }
     }
 
-    private fun getLedIcon(): Int {
-        return if (isDiodeOnOnClickValue) {
-            R.drawable.ic_led_off
-        } else
-            R.drawable.ic_led_on
-    }
-
     private fun changeFavoriteState() {
         if (!isFavorite())
-            addToFavorite(BluetoothService.selectedDevice!!)
+            addToFavorite(BluetoothService.connectedDevice!!)
         else
             deleteFromFavorite()
 
@@ -137,7 +132,7 @@ class DeviceFragment : Fragment() {
 
     private fun deleteFromFavorite() {
         with(favoriteSharedPref!!.edit()) {
-            remove(BluetoothService.selectedDevice!!.address)
+            remove(BluetoothService.connectedDevice!!.address)
             commit()
         }
         Toast.makeText(requireContext(), "Delete from favorite", Toast.LENGTH_SHORT).show()
@@ -151,7 +146,7 @@ class DeviceFragment : Fragment() {
     }
 
     private fun isFavorite(): Boolean {
-        return favoriteSharedPref!!.all.contains(BluetoothService.selectedDevice!!.address)
+        return favoriteSharedPref!!.all.contains(BluetoothService.connectedDevice!!.address)
     }
 
     private fun hideLists() {
@@ -184,17 +179,15 @@ class DeviceFragment : Fragment() {
     }
 
     private fun getDeviceName(): String {
-        return if (BluetoothService.selectedDevice!!.name == null)
+        return if (BluetoothService.connectedDevice!!.name == null)
             "Unknown"
         else
-            BluetoothService.selectedDevice!!.name!!
+            BluetoothService.connectedDevice!!.name!!
     }
 
     override fun onDestroyView() {
-        Log.v("qwe", "Destroy -> disconnect")
         super.onDestroyView()
         _binding = null
-        BluetoothService.disconnectOnFragmentDestroy()
     }
 }
 
