@@ -9,23 +9,35 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/button_go_back"
+        android:id="@+id/button_show_scanner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Escape" />
+        android:layout_gravity="center" />
 
     <Button
         android:id="@+id/button_start_stop_scan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="@string/start_scan"
-        app:layout_constraintBottom_toTopOf="@id/recycler_bluetooth_devices" />
+        android:text="@string/start_scan" />
+
+    <Button
+        android:id="@+id/button_show_network"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Network" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"></androidx.fragment.app.FragmentContainerView>
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:menu="@menu/navigation_menu" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>
