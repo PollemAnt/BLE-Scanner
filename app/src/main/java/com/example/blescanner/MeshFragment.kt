@@ -1,14 +1,12 @@
 package com.example.blescanner
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
-
 import com.example.blescanner.databinding.FragmentMeshBinding
 
 class MeshFragment : Fragment() {
@@ -38,19 +36,18 @@ class MeshFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         checkIsFragmentReadyToShow()
-
-        activity?.onBackPressedDispatcher?.addCallback(
-            viewLifecycleOwner,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    BluetoothService.onBackPressed()
-                }
-            })
+        onBackPressed()
     }
 
     private fun checkIsFragmentReadyToShow() {
-        BluetoothService.selectedDevice!!.isFragmentReadyToShow.observe(viewLifecycleOwner) { isFragmentReadyToShow ->
+        binding.progressCircular.visibility = View.VISIBLE
+
+        if (BluetoothService.connectedDevice == null)
+            binding.progressCircular.visibility = View.INVISIBLE
+
+        BluetoothService.connectedDevice?.isFragmentReadyToShow?.observe(viewLifecycleOwner) { isFragmentReadyToShow ->
             if (isFragmentReadyToShow) {
+                binding.isDeviceConnected.visibility = View.INVISIBLE
                 binding.progressCircular.visibility = View.INVISIBLE
                 areListsShown = false
                 showContents()
@@ -62,7 +59,7 @@ class MeshFragment : Fragment() {
         setContentsVisible()
         setOnClickListeners()
         binding.apply {
-            device.text = getDeviceName() + " " + BluetoothService.selectedDevice!!.address
+            device.text = getDeviceName() + " " + BluetoothService.connectedDevice!!.address
             imageviewFavorite.setImageResource(getFavoriteIcon())
         }
     }
@@ -85,15 +82,19 @@ class MeshFragment : Fragment() {
                     showLists()
             }
 
-            buttonTest.setOnClickListener {
-                BluetoothService.test()
+            buttonProvision.setOnClickListener {
+                BluetoothMeshNetwork.prepareProvision()
+            }
+
+            buttonDisconnect.setOnClickListener {
+                BluetoothService.callDisconnect()
             }
         }
     }
 
     private fun changeFavoriteState() {
         if (!isFavorite())
-            addToFavorite(BluetoothService.selectedDevice!!)
+            addToFavorite(BluetoothService.connectedDevice!!)
         else
             deleteFromFavorite()
 
@@ -110,7 +111,7 @@ class MeshFragment : Fragment() {
 
     private fun deleteFromFavorite() {
         with(favoriteSharedPrefMeshFragment!!.edit()) {
-            remove(BluetoothService.selectedDevice!!.address)
+            remove(BluetoothService.connectedDevice!!.address)
             commit()
         }
         Toast.makeText(requireContext(), "Delete from favorite", Toast.LENGTH_SHORT).show()
@@ -124,7 +125,7 @@ class MeshFragment : Fragment() {
     }
 
     private fun isFavorite(): Boolean {
-        return favoriteSharedPrefMeshFragment!!.all.contains(BluetoothService.selectedDevice!!.address)
+        return favoriteSharedPrefMeshFragment!!.all.contains(BluetoothService.connectedDevice!!.address)
     }
 
     private fun hideLists() {
@@ -157,16 +158,24 @@ class MeshFragment : Fragment() {
     }
 
     private fun getDeviceName(): String {
-        return if (BluetoothService.selectedDevice!!.name == null)
+        return if (BluetoothService.connectedDevice!!.name == null)
             "Mesh"
         else
-            BluetoothService.selectedDevice!!.name!!
+            BluetoothService.connectedDevice!!.name!!
+    }
+
+    private fun onBackPressed() {
+        activity?.onBackPressedDispatcher?.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    BluetoothService.onBackPressed()
+                }
+            })
     }
 
     override fun onDestroyView() {
-        Log.v("qwe", "Destroy -> disconnect")
         super.onDestroyView()
         _binding = null
-        BluetoothService.disconnectOnFragmentDestroy()
     }
 }
