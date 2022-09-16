@@ -14,20 +14,24 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import com.example.blescanner.databinding.ActivityMainBinding
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
+import com.siliconlab.bluetoothmesh.adk.BluetoothMesh
+import com.siliconlab.bluetoothmesh.adk.configuration.BluetoothMeshConfiguration
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+
     private val bluetoothDeviceScannerFragment = BluetoothDeviceScannerFragment()
-    private val dialogFragment = DeviceFragment()
+    private val blinkyFragment = DeviceFragment()
     private val meshFragment = MeshFragment()
+    private val networkFragment = NetworkFragment()
+    private val subnetFragment = SubnetFragment()
 
     private var isScanning = false
         set(value) {
@@ -35,6 +39,7 @@ class MainActivity : AppCompatActivity() {
             binding.buttonStartStopScan.text =
                 if (value) resources.getString(R.string.stop_scan) else resources.getString(R.string.start_scan)
         }
+    private var deviceType: String? = ""
 
     private val isLocationPermissionGranted
         get() = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -87,9 +92,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+
+        if (BluetoothMesh.getInstance() == null)
+            BluetoothMesh.initialize(this, BluetoothMeshConfiguration())
 
         setUpViews()
+        setBottomNavigationView()
+        supportActionBar?.hide()
     }
 
     private fun setUpViews() {
@@ -97,16 +106,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setIsScanningValue()
         setFragmentContainerView()
-        binding.apply {
-            buttonStartStopScan.setOnClickListener {
-                checkPermissions()
-            }
-        }
-        binding.apply {
-            buttonGoBack.setOnClickListener {
-                showScannerFragment()
-            }
-        }
+        setOnClickListeners()
     }
 
     private fun setIsScanningValue() {
@@ -116,44 +116,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setFragmentContainerView() {
-        showScannerFragment()
+        showNetworkFragment()
         BluetoothService.typeOfSelectedDevice.observe(this) { deviceType ->
-            Log.v("qwe", deviceType.toString())
             when (deviceType) {
-                "Blinky" -> showDeviceFragment()
-                "Mesh" -> showMeshFragment()
+                "Blinky",
+                "Mesh" -> {
+                    this.deviceType = deviceType
+                    navigationShowDeviceFragment()
+                }
                 "Unknown" -> deviceIsUnknown()
-                null -> showScannerFragment()
+                null -> navigationShowScannerFragment()
             }
         }
+        BluetoothMeshNetwork.isSubnetSelected.observe(this) { isSubnetSelected ->
+            if (isSubnetSelected)
+                showSubnetFragment()
+            else
+                showNetworkFragment()
+        }
     }
 
-    private fun showScannerFragment() {
-        Log.v("qwe", "showScannerFragment")
-        binding.buttonGoBack.visibility = View.GONE
-        binding.buttonStartStopScan.visibility = View.VISIBLE
+    private fun showNetworkFragment() {
+        binding.apply {
+            buttonShowNetwork.visibility = View.GONE
+            buttonShowScanner.visibility = View.GONE
+            buttonStartStopScan.visibility = View.GONE
+        }
         supportFragmentManager.beginTransaction().apply {
-            replace(R.id.fragment_container_view, bluetoothDeviceScannerFragment)
+            replace(R.id.fragment_container_view, networkFragment)
             commit()
         }
     }
 
-    private fun showDeviceFragment() {
-        binding.buttonGoBack.visibility = View.VISIBLE
-        binding.buttonStartStopScan.visibility = View.GONE
-        supportFragmentManager.beginTransaction().apply {
-            replace(R.id.fragment_container_view, dialogFragment)
-            commit()
-        }
-    }
-
-    private fun showMeshFragment() {
-        binding.buttonGoBack.visibility = View.VISIBLE
-        binding.buttonStartStopScan.visibility = View.GONE
-        supportFragmentManager.beginTransaction().apply {
-            replace(R.id.fragment_container_view, meshFragment)
-            commit()
-        }
+    private fun navigationShowDeviceFragment() {
+        binding.bottomNavigationView.selectedItemId = R.id.Device
     }
 
     private fun deviceIsUnknown() {
@@ -162,8 +158,38 @@ class MainActivity : AppCompatActivity() {
         BluetoothService.startScan()
     }
 
-    private fun checkPermissions() {
+    private fun navigationShowScannerFragment() {
+        binding.bottomNavigationView.selectedItemId = R.id.Scanner
+    }
 
+    private fun showSubnetFragment() {
+        binding.apply {
+            buttonShowNetwork.visibility = View.GONE
+            buttonShowScanner.visibility = View.VISIBLE
+            buttonShowScanner.text = "Add device"
+            buttonStartStopScan.visibility = View.GONE
+        }
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragment_container_view, subnetFragment)
+            commit()
+        }
+    }
+
+    private fun setOnClickListeners() {
+        binding.apply {
+            buttonStartStopScan.setOnClickListener {
+                checkPermissions()
+            }
+            buttonShowScanner.setOnClickListener {
+                navigationShowScannerFragment()
+            }
+            buttonShowNetwork.setOnClickListener {
+                navigationShowDeviceFragment()
+            }
+        }
+    }
+
+    private fun checkPermissions() {
         bluetoothScanPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             isBluetoothScanPermissionGranted
         else
@@ -236,6 +262,60 @@ class MainActivity : AppCompatActivity() {
                     Manifest.permission.BLUETOOTH_CONNECT
                 )
             )
+        }
+    }
+
+    private fun setBottomNavigationView() {
+        binding.bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.Network ->
+                    showNetworkFragment()
+                R.id.Scanner ->
+                    showScannerFragment()
+                R.id.Device -> {
+                    if (deviceType == "Blinky")
+                        showBlinkyFragment()
+                    else
+                        showMeshFragment()
+                }
+            }
+            true
+        }
+    }
+
+    private fun showScannerFragment() {
+        binding.apply {
+            buttonShowScanner.visibility = View.GONE
+            buttonStartStopScan.visibility = View.VISIBLE
+            buttonShowNetwork.visibility = View.GONE
+        }
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragment_container_view, bluetoothDeviceScannerFragment)
+            commit()
+        }
+    }
+
+    private fun showBlinkyFragment() {
+        binding.apply {
+            buttonShowScanner.visibility = View.GONE
+            buttonStartStopScan.visibility = View.GONE
+            buttonShowNetwork.visibility = View.GONE
+        }
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragment_container_view, blinkyFragment)
+            commit()
+        }
+    }
+
+    private fun showMeshFragment() {
+        binding.apply {
+            buttonShowScanner.visibility = View.GONE
+            buttonStartStopScan.visibility = View.GONE
+            buttonShowNetwork.visibility = View.GONE
+        }
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragment_container_view, meshFragment)
+            commit()
         }
     }
 }
