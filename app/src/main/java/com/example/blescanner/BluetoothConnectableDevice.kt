@@ -1,6 +1,8 @@
 package com.example.blescanner
 
 import android.bluetooth.*
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.ContentValues
@@ -18,9 +20,8 @@ import java.util.*
 
 class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
 
-    //I dont use it yet, this variables is copy-paste from the documentation
-    private var refreshBluetoothDeviceCallback: RefreshBluetoothDeviceCallback? = null
-    lateinit var refreshGattServicesCallback: RefreshGattServicesCallback
+    var refreshBluetoothDeviceCallback: RefreshBluetoothDeviceCallback? = null
+    private lateinit var refreshGattServicesCallback: RefreshGattServicesCallback
     private var mtuSize = 0
 
     private val _isFragmentReadyToShow: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -33,16 +34,20 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
     val isDiodeOn: LiveData<Boolean> = _isDiodeOn
 
     lateinit var diodeControlCharacteristic: BluetoothGattCharacteristic
-    lateinit var buttonStateCharacteristic: BluetoothGattCharacteristic
+    private lateinit var buttonStateCharacteristic: BluetoothGattCharacteristic
 
-    lateinit var bluetoothGatt: BluetoothGatt
+    private lateinit var bluetoothGatt: BluetoothGatt
     var scanResult: ScanResult = result
     val address: String
         get() = scanResult.device.address
 
-    fun isInitialized(): Boolean {
-        return this::bluetoothGatt.isInitialized
-    }
+    fun isInitialized(): Boolean = this::bluetoothGatt.isInitialized
+
+    override fun getMTU(): Int = mtuSize
+
+    override fun getName(): String? = scanResult.device.name
+
+    override fun getAdvertisementData(): ByteArray? = scanResult.scanRecord!!.bytes
 
     override fun connect() {
         try {
@@ -54,13 +59,132 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
                 BluetoothDevice.TRANSPORT_LE
             )
         } catch (exception: IllegalArgumentException) {
-            Toast.makeText(
-                BlinkyApplication.appContext,
-                "Device not found. Unable to connect.",
-                Toast.LENGTH_SHORT
-            ).show()
-            Log.v("qwe", "Device not found. Unable to connect.")
+            "Device not found. Unable to connect.".toast()
         }
+    }
+
+    override fun disconnect() {
+        _isFragmentReadyToShow.postValue(false)
+        if (BluetoothService.isInitialized()) {
+            bluetoothGatt.let {
+                bluetoothGatt.disconnect()
+            }
+            Log.v("qwe", "Disconnect from $name : $address")
+        }
+    }
+
+    private val bluetoothGattCallback = object : BluetoothGattCallback() {
+
+        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            super.onConnectionStateChange(gatt, status, newState)
+            Log.v("qwe", "onConnectionStateChange status: $status")
+            when (newState) {
+                BluetoothProfile.STATE_CONNECTED ->
+                    onConnected()
+
+                BluetoothProfile.STATE_DISCONNECTED ->
+                    onDisconnected()
+            }
+        }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.v("qwe", "onServicesDiscovered GATT_SUCCESS")
+                BluetoothService.listOfServices = gatt?.services as List<BluetoothGattService>
+                createListOfCharacteristic(BluetoothService.listOfServices)
+
+                if (BluetoothService.connectedDevice!!.hasService(Constants.BLINKY_SERVICE_UUID)) {
+                    properCharacteristic()
+                }
+                _isFragmentReadyToShow.postValue(true)
+                "Connected with $name : $address".toast()
+            } else {
+                Log.v("qwe", "onServicesDiscovered received: $status")
+            }
+        }
+
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
+            Log.v("qwe", "onCharacteristicChanged")
+            super.onCharacteristicChanged(gatt, characteristic)
+            if (characteristic!!.uuid == Constants.BUTTON_STATE_UUID)
+                _isButtonPressed.postValue(characteristic.value[0] == 1.toByte())
+
+            if (characteristic.uuid == Constants.MESH_PROVISION_CHARACTERISTIC_UUID || characteristic.uuid == Constants.MESH_SILICON_LABS_CHARACTERISTIC_UUID)
+                updateData(characteristic.service.uuid, characteristic.uuid, characteristic.value)
+        }
+
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            if (characteristic == diodeControlCharacteristic) {
+                _isDiodeOn.postValue(characteristic.value[0] == 1.toByte())
+            }
+            setNotificationDeviceButtonState()
+            super.onCharacteristicRead(gatt, characteristic, status)
+        }
+
+        override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+            super.onMtuChanged(gatt, mtu, status)
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                mtuSize = mtu
+                gatt.discoverServices()
+            }
+        }
+    }
+
+    override fun onConnected() {
+        super.onConnected()
+        Log.v("qwe", "STATE_CONNECTED")
+        val discoverServices = bluetoothGatt.discoverServices()
+        Log.v("qwe", "Are services discover ? = $discoverServices")
+        Log.v(
+            "qwe",
+            "Connection with: " + bluetoothGatt.device.name + " " + bluetoothGatt.device.address
+        )
+    }
+
+    override fun onDisconnected() {
+        super.onDisconnected()
+        BluetoothService.listOfCharacteristic.clear()
+        bluetoothGatt.close()
+        _isFragmentReadyToShow.postValue(false)
+        "Disconnected from $name:$address".toast()
+    }
+
+    private fun createListOfCharacteristic(gattServices: List<BluetoothGattService>) {
+        BluetoothService.listOfCharacteristic.clear()
+        gattServices.forEach { gattService ->
+            val gattCharacteristics = gattService.characteristics
+            gattCharacteristics.forEach { gattCharacteristic ->
+                BluetoothService.listOfCharacteristic.add(gattCharacteristic)
+            }
+        }
+    }
+
+    private fun properCharacteristic() {
+        diodeControlCharacteristic =
+            BluetoothService.listOfServices[3].characteristics[0]
+        buttonStateCharacteristic =
+            BluetoothService.listOfServices[3].characteristics[1]
+    }
+
+    private fun setNotificationDeviceButtonState() {
+        bluetoothGatt.setCharacteristicNotification(
+            buttonStateCharacteristic,
+            true
+        )
+        val descriptor = buttonStateCharacteristic.descriptors[0]
+        descriptor.value = (BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+        bluetoothGatt.writeDescriptor(descriptor)
+    }
+
+    fun readDiodeStatus() {
+        bluetoothGatt.readCharacteristic(diodeControlCharacteristic)
     }
 
     fun setValueToControlDiode() {
@@ -72,17 +196,11 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
             byteArray,
             object : ConnectableDeviceWriteCallback {
                 override fun onWrite(p0: UUID?, p1: UUID?) {
-                    Log.v("qwe", "ConnectableDeviceWriteCallback: onWrite ")
+                    _isDiodeOn.postValue(byteArray.contentEquals(byteArrayOf(0x01)))
                 }
 
                 override fun onFailed(p0: UUID?, p1: UUID?) {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(
-                            BlinkyApplication.appContext,
-                            "Led turn " + if (_isDiodeOn.value!!) "on" else "off" + " failed",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                    "Led turn " + if (_isDiodeOn.value!!) "on" else "off" + " failed".toast()
                 }
             }
         )
@@ -110,15 +228,6 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
         }
     }
 
-    override fun disconnect() {
-        _isFragmentReadyToShow.postValue(false)
-        if (BluetoothService.isInitialized()) {
-            bluetoothGatt.let {
-                bluetoothGatt.close()
-            }
-        }
-    }
-
     override fun hasService(service: UUID?): Boolean {
         if (bluetoothGatt.services.isNotEmpty()) {
             return bluetoothGatt.getService(service) != null
@@ -128,119 +237,6 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
         }
     }
 
-    private val bluetoothGattCallback = object : BluetoothGattCallback() {
-        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            Log.v("qwe", "Start  onConnectionStateChange ")
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.v("qwe", "Successfully connected to the GATT Server")
-                val discoverServices = gatt.discoverServices()
-                Log.v("qwe", "Are services discover ? = $discoverServices")
-                Log.v("qwe", "Connection with: " + gatt.device.name + " " + gatt.device.address)
-
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                onConnectionFailed()
-            }
-        }
-
-        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.v("qwe", "onServicesDiscovered GATT_SUCCESS")
-                BluetoothService.listOfServices = gatt?.services as List<BluetoothGattService>
-                createListOfCharacteristic(BluetoothService.listOfServices)
-
-                if (BluetoothService.selectedDevice!!.hasService(Constants.BLINKY_SERVICE_UUID)) {
-                    properCharacteristic()
-                    readDiodeStatus()
-                }
-                _isFragmentReadyToShow.postValue(true)
-
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(BlinkyApplication.appContext, "Connected", Toast.LENGTH_LONG)
-                        .show()
-                }
-            } else {
-                Log.v("qwe", "onServicesDiscovered received: $status")
-            }
-        }
-
-        override fun onCharacteristicChanged(
-            gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?
-        ) {
-            if (characteristic == buttonStateCharacteristic) {
-                _isButtonPressed.postValue(characteristic.value[0] == 1.toByte())
-                super.onCharacteristicChanged(gatt, characteristic)
-            }
-        }
-
-        override fun onCharacteristicRead(
-            gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?,
-            status: Int
-        ) {
-            if (characteristic == diodeControlCharacteristic) {
-                _isDiodeOn.postValue(characteristic.value[0] == 1.toByte())
-            }
-            setNotificationDeviceButtonState()
-            super.onCharacteristicRead(gatt, characteristic, status)
-        }
-
-        //I dont use it yet, this function is copy-paste from the documentation
-        override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
-            super.onMtuChanged(gatt, mtu, status)
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                mtuSize = mtu
-                gatt.discoverServices()
-            }
-        }
-    }
-
-    private fun onConnectionFailed() {
-        disconnect()
-        _isFragmentReadyToShow.postValue(false)
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(
-                BlinkyApplication.appContext,
-                "Disconnected from the GATT Server",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-        Log.v("qwe", "disconnected from the GATT Server")
-    }
-
-    private fun createListOfCharacteristic(gattServices: List<BluetoothGattService>) {
-        gattServices.forEach { gattService ->
-            val gattCharacteristics = gattService.characteristics
-            gattCharacteristics.forEach { gattCharacteristic ->
-                BluetoothService.listOfCharacteristic.add(gattCharacteristic)
-            }
-        }
-    }
-
-    private fun properCharacteristic() {
-        diodeControlCharacteristic =
-            BluetoothService.listOfServices[3].characteristics[0]
-        buttonStateCharacteristic =
-            BluetoothService.listOfServices[3].characteristics[1]
-    }
-
-    private fun setNotificationDeviceButtonState() {
-        bluetoothGatt.setCharacteristicNotification(
-            buttonStateCharacteristic,
-            true
-        )
-        val descriptor = buttonStateCharacteristic.descriptors[0]
-        descriptor.value = (BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-        bluetoothGatt.writeDescriptor(descriptor)
-    }
-
-    private fun readDiodeStatus() {
-        bluetoothGatt.readCharacteristic(diodeControlCharacteristic)
-        _isFragmentReadyToShow.postValue(true)
-    }
-
-
-    //I dont use it yet, this function is copy-paste from the documentation
     override fun subscribe(
         service: UUID?,
         characteristic: UUID?,
@@ -274,7 +270,6 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
         }
     }
 
-    //I dont use it yet, this function is copy-paste from the documentation
     override fun unsubscribe(
         service: UUID?,
         characteristic: UUID?,
@@ -308,17 +303,35 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
         }
     }
 
-
-    //I dont use it yet, this function is copy-paste from the documentation
     override fun refreshBluetoothDevice(callback: RefreshBluetoothDeviceCallback) {
         refreshBluetoothDeviceCallback = callback
         val settings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
             .build()
-        BluetoothService.bluetoothScanner.startScan(null, settings, BluetoothService.scanCallback)
+        val filters = ArrayList<ScanFilter>()
+        val filter = ScanFilter.Builder().setDeviceAddress(address)
+            .build()
+        filters.add(filter)
+
+        val refreshScanCallback = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult?) {
+
+                result?.let {
+                    if (it.device.address == address) {
+                        BluetoothService.bluetoothScanner.stopScan(this)
+                        scanResult = result
+                        refreshBluetoothDeviceCallback?.success()
+                    }
+                }
+            }
+        }
+        BluetoothService.bluetoothScanner.startScan(
+            filters,
+            settings,
+            refreshScanCallback
+        )
     }
 
-    //I dont use it yet, this function is copy-paste from the documentation
     private fun refreshDeviceCache() {
         try {
             val refreshMethod: Method =
@@ -331,30 +344,18 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
         }
     }
 
-    //I dont use it yet, this function is copy-paste from the documentation
     override fun refreshGattServices(callback: RefreshGattServicesCallback) {
         refreshGattServicesCallback = callback
         refreshDeviceCache()
         bluetoothGatt.discoverServices()
     }
 
-    override fun getMTU(): Int {
-        return mtuSize
+    override fun getServiceData(service: UUID?): ByteArray? {
+        return service?.let {
+            scanResult.scanRecord?.getServiceData(ParcelUuid(it))
+        }
     }
 
-    //I dont use it yet, this function is copy-paste from the documentation
-    override fun getServiceData(service: UUID?): ByteArray {
-        TODO("Not yet implemented")
-    }
-
-    override fun getName(): String? {
-        return scanResult.device.name
-    }
-
-    //I dont use it yet, this function is copy-paste from the documentation
-    override fun getAdvertisementData(): ByteArray? = advertisementData
-
-    //I dont use it yet, this function is copy-paste from the documentation
     override fun getUUID(): ByteArray? {
         val data = getServiceData(ProvisionerConnection.MESH_UNPROVISIONED_SERVICE)
         if (data != null && data.size >= 16) {
@@ -365,5 +366,14 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
         return null
     }
 
-
+    private fun String.toast() {
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(
+                BlinkyApplication.appContext,
+                this,
+                Toast.LENGTH_LONG
+            )
+                .show()
+        }
+    }
 }
