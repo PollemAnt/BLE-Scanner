@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/Network"
+        android:enabled="true"
+        android:icon="@drawable/image_network_navigation_bar"
+        android:title="Network"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/Scanner"
+        android:enabled="true"
+        android:icon="@drawable/image_scanner_navigation_bar"
+        android:title="Scanner"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/Device"
+        android:enabled="true"
+        android:icon="@drawable/ic_device_navigation_bar"
+        android:title="Device"
+        app:showAsAction="ifRoom" />
+</menu>
