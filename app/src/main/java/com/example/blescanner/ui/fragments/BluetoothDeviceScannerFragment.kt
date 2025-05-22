@@ -1,4 +1,4 @@
-package com.example.blescanner
+package com.example.blescanner.ui.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,6 +8,9 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
+import com.example.blescanner.data.models.BluetoothConnectableDevice
+import com.example.blescanner.ui.adapters.BluetoothConnectableDeviceAdapter
+import com.example.blescanner.bluetooth.BluetoothService
 import com.example.blescanner.databinding.FragmentRecycleListOfDevicesBinding
 
 

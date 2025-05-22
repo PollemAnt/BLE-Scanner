@@ -1,8 +1,9 @@
-package com.example.blescanner
+package com.example.blescanner.ui.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.example.blescanner.bluetooth.BluetoothMeshNetwork
 import com.example.blescanner.databinding.ItemSubnetBinding
 import com.siliconlab.bluetoothmesh.adk.data_model.subnet.Subnet
 

@@ -1,4 +1,4 @@
-package com.example.blescanner
+package com.example.blescanner.bluetooth
 
 import android.os.Handler
 import android.os.Looper
@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.blescanner.core.BlinkyApplication
 import com.siliconlab.bluetoothmesh.adk.BluetoothMesh
 import com.siliconlab.bluetoothmesh.adk.ErrorType
 import com.siliconlab.bluetoothmesh.adk.configuration_control.ConfigurationControl

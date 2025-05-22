@@ -1,4 +1,4 @@
-package com.example.blescanner
+package com.example.blescanner.ui.adapters
 
 import android.bluetooth.le.ScanResult
 import android.view.LayoutInflater
@@ -6,6 +6,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.blescanner.data.models.BluetoothConnectableDevice
+import com.example.blescanner.utils.Constants
+import com.example.blescanner.R
 import com.example.blescanner.databinding.ItemScanResultBinding
 import kotlin.math.pow
 

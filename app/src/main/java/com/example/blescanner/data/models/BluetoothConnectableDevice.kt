@@ -1,4 +1,4 @@
-package com.example.blescanner
+package com.example.blescanner.data.models
 
 import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
@@ -13,6 +13,9 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.blescanner.core.BlinkyApplication
+import com.example.blescanner.bluetooth.BluetoothService
+import com.example.blescanner.utils.Constants
 import com.siliconlab.bluetoothmesh.adk.connectable_device.*
 import com.siliconlab.bluetoothmesh.adk.provisioning.ProvisionerConnection
 import java.lang.reflect.Method
@@ -90,7 +93,9 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.v("qwe", "onServicesDiscovered GATT_SUCCESS")
-                BluetoothService.listOfServices = gatt?.services as List<BluetoothGattService>
+                for(service in gatt?.services!!){
+                    BluetoothService.listOfServices.add(service)
+                }
                 createListOfCharacteristic(BluetoothService.listOfServices)
 
                 if (BluetoothService.connectedDevice!!.hasService(Constants.BLINKY_SERVICE_UUID)) {

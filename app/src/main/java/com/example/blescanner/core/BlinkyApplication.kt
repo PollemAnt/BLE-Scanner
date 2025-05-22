@@ -1,4 +1,4 @@
-package com.example.blescanner
+package com.example.blescanner.core
 
 import android.app.Application
 import android.content.Context

@@ -1,4 +1,4 @@
-package com.example.blescanner
+package com.example.blescanner.bluetooth
 
 import android.Manifest
 import android.bluetooth.BluetoothGattCharacteristic
@@ -15,6 +15,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.blescanner.core.BlinkyApplication
+import com.example.blescanner.data.models.BluetoothConnectableDevice
+import com.example.blescanner.utils.Constants
 
 object BluetoothService {
 
@@ -27,7 +30,7 @@ object BluetoothService {
     val bluetoothScanner: BluetoothLeScanner by lazy {
         bluetoothManager.adapter.bluetoothLeScanner
     }
-    lateinit var listOfServices: List<BluetoothGattService>
+    var listOfServices = mutableListOf<BluetoothGattService>()
     var listOfCharacteristic = mutableListOf<BluetoothGattCharacteristic>()
 
     var selectedDevice: BluetoothConnectableDevice? = null

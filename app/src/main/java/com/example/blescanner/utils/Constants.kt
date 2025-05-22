@@ -1,4 +1,4 @@
-package com.example.blescanner
+package com.example.blescanner.utils
 
 import android.os.ParcelUuid
 import java.util.*

@@ -7,17 +7,17 @@
 
     <fragment
         android:id="@id/layout_network"
-        android:name="com.example.blescanner.NetworkFragment"
+        android:name="com.example.blescanner.ui.fragments.NetworkFragment"
         android:label="fragment_first"
         tools:layout="@layout/fragment_network" />
     <fragment
         android:id="@+id/fragment_scanner"
-        android:name="com.example.blescanner.BluetoothDeviceScannerFragment"
+        android:name="com.example.blescanner.ui.fragments.BluetoothDeviceScannerFragment"
         android:label="fragment_second"
         tools:layout="@layout/fragment_recycle_list_of_devices" />
     <fragment
         android:id="@+id/fragment_mesh"
-        android:name="com.example.blescanner.MeshFragment"
+        android:name="com.example.blescanner.ui.fragments.MeshFragment"
         android:label="fragment_third"
         tools:layout="@layout/fragment_mesh" />
 </navigation>
