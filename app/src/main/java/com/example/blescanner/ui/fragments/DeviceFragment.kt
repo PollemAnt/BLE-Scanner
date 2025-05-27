@@ -1,198 +1,77 @@
 package com.example.blescanner.ui.fragments
 
-import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
-import androidx.fragment.app.Fragment
 import com.example.blescanner.R
 import com.example.blescanner.bluetooth.BluetoothService
-import com.example.blescanner.data.models.BluetoothConnectableDevice
 import com.example.blescanner.databinding.FragmentDeviceBinding
+import com.example.blescanner.viewmodel.DeviceViewModel
 
-class DeviceFragment : Fragment() {
-    private var _binding: FragmentDeviceBinding? = null
-    private val binding get() = _binding!!
+class DeviceFragment : BaseDeviceFragment<FragmentDeviceBinding, DeviceViewModel>() {
+    override val layoutRes = R.layout.fragment_device
+    override val viewModelClass = DeviceViewModel::class.java
 
-    private var areListsShown = false
-
-    private val favoriteSharedPref by lazy {
-        requireContext().getSharedPreferences("Favorites bluetooth devices", 0)
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding =
-            FragmentDeviceBinding.inflate(inflater)
-
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        checkIsFragmentReadyToShow()
-        setImageBasedOnObserveVariables()
-        onBackPressed()
-    }
-
-    private fun onBackPressed() {
-        activity?.onBackPressedDispatcher?.addCallback(
-            viewLifecycleOwner,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    BluetoothService.onBackPressed()
-                }
-            })
-    }
-
-    private fun setImageBasedOnObserveVariables() {
-        BluetoothService.connectedDevice?.isDiodeOn?.observe(viewLifecycleOwner) { isDiodeOnStartValue ->
-
-            if (isDiodeOnStartValue)
-                binding.imageviewLed.setImageResource(R.drawable.ic_led_on)
-            else
-                binding.imageviewLed.setImageResource(R.drawable.ic_led_off)
-        }
-
-        BluetoothService.connectedDevice?.isButtonPressed?.observe(viewLifecycleOwner) { isButtonPressed ->
-            if (isButtonPressed)
-                binding.imageviewButtonState.setImageResource(R.drawable.ic_button_pressed)
-            else
-                binding.imageviewButtonState.setImageResource(R.drawable.ic_button_unpressed)
-        }
-    }
-
-    private fun checkIsFragmentReadyToShow() {
-        BluetoothService.connectedDevice?.isFragmentReadyToShow?.observe(viewLifecycleOwner) { isFragmentReadyToShow ->
-            if (isFragmentReadyToShow) {
-                BluetoothService.connectedDevice!!.readDiodeStatus()
-                binding.isDeviceConnected.visibility = View.INVISIBLE
-                binding.progressCircular.visibility = View.INVISIBLE
-                areListsShown = false
-                showContents()
-            }
-        }
-    }
-
-    private fun showContents() {
-        setContentsVisible()
-        setOnClickListeners()
-        binding.apply {
-            device.text = getDeviceName() + " " + BluetoothService.connectedDevice!!.address
-            imageviewFavorite.setImageResource(getFavoriteIcon())
-        }
-    }
-
-    private fun setContentsVisible() {
+    override fun onDeviceReady() {
         binding.layoutBluetoothDevice.visibility = View.VISIBLE
-    }
-
-    private fun setOnClickListeners() {
-        binding.apply {
-
-            imageviewLed.setOnClickListener {
-                BluetoothService.diodeControl()
-            }
-
-            imageviewFavorite.setOnClickListener {
-                changeFavoriteState()
-            }
-
-            buttonDisconnect.setOnClickListener {
-                BluetoothService.callDisconnect()
-            }
-
-            buttonShowInfo.setOnClickListener {
-                if (areListsShown)
-                    hideLists()
-                else
-                    showLists()
-            }
+        binding.device.text = BluetoothService.getConnectedDevice()?.let {
+            "${it.name ?: "Unknown"} ${it.address}"
         }
-    }
-
-    private fun changeFavoriteState() {
-        if (!isFavorite())
-            addToFavorite(BluetoothService.connectedDevice!!)
-        else
-            deleteFromFavorite()
 
         binding.imageviewFavorite.setImageResource(getFavoriteIcon())
     }
 
-    private fun addToFavorite(bluetoothDevice: BluetoothConnectableDevice) {
-        with(favoriteSharedPref!!.edit()) {
-            putString(bluetoothDevice.address, bluetoothDevice.name)
-            commit()
-        }
-        Toast.makeText(requireContext(), "Add to favorite", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun deleteFromFavorite() {
-        with(favoriteSharedPref!!.edit()) {
-            remove(BluetoothService.connectedDevice!!.address)
-            commit()
-        }
-        Toast.makeText(requireContext(), "Delete from favorite", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun getFavoriteIcon(): Int {
-        return if (isFavorite())
-            R.drawable.ic_favorited
-        else
-            R.drawable.ic_unfavorite
-    }
-
-    private fun isFavorite(): Boolean {
-        return favoriteSharedPref!!.all.contains(BluetoothService.connectedDevice!!.address)
-    }
-
-    private fun hideLists() {
+    override fun onClickActions() {
         binding.apply {
-            buttonShowInfo.text = "Show info"
-            areListsShown = false
-            servicesList.visibility = View.GONE
-            characteristicsList.visibility = View.GONE
+            imageviewLed.setOnClickListener { viewModel.diodeControl() }
+
+            imageviewFavorite.setOnClickListener {
+                toggleFavorite()
+            }
+
+            buttonShowInfo.setOnClickListener {
+                viewModel.toggleListsVisibility()
+            }
+
+            buttonDisconnect.setOnClickListener {
+                viewModel.callDisconnect()
+            }
         }
     }
 
-    private fun showLists() {
-        setServicesList()
-        setCharacteristicsList()
-        areListsShown = true
-        binding.apply {
-            servicesList.visibility = View.VISIBLE
-            characteristicsList.visibility = View.VISIBLE
-            buttonShowInfo.text = "Hide info"
+    override fun observeSpecific() {
+        viewModel.isDiodeOn.observe(viewLifecycleOwner) { isOn ->
+            binding.imageviewLed.setImageResource(
+                if (isOn) R.drawable.ic_led_on else R.drawable.ic_led_off
+            )
+        }
+
+        viewModel.isButtonPressed.observe(viewLifecycleOwner) { isPressed ->
+            binding.imageviewButtonState.setImageResource(
+                if (isPressed) R.drawable.ic_button_pressed else R.drawable.ic_button_unpressed
+            )
         }
     }
 
-    private fun setServicesList() {
-        binding.servicesList.text = BluetoothService.listOfServices.toString().drop(1).dropLast(1)
+    private fun toggleFavorite() {
+        val device = BluetoothService.getConnectedDevice() ?: return
+        if (viewModel.isFavorite()) {
+            viewModel.deleteFromFavorite()
+            toast("Deleted from favorites")
+        } else {
+            viewModel.addToFavorite(device.address, device.name)
+            toast("Added to favorites")
+        }
+        binding.imageviewFavorite.setImageResource(getFavoriteIcon())
     }
 
-    private fun setCharacteristicsList() {
-        binding.characteristicsList.text =
-            BluetoothService.listOfCharacteristic.toString().drop(1).dropLast(1)
-    }
+    private fun getFavoriteIcon() = if (viewModel.isFavorite())
+        R.drawable.ic_favorited else R.drawable.ic_unfavorite
 
-    private fun getDeviceName(): String {
-        return if (BluetoothService.connectedDevice!!.name == null)
-            "Unknown"
-        else
-            BluetoothService.connectedDevice!!.name!!
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    private fun toast(text: String) {
+        Toast.makeText(requireContext(), text, Toast.LENGTH_SHORT).show()
     }
 }
+
 
 
 
