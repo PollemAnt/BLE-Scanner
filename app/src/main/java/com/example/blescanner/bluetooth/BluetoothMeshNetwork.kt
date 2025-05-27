@@ -120,7 +120,7 @@ object BluetoothMeshNetwork {
     private fun provision() {
         if (currentSubnet != null) {
             val provisionerConnection =
-                ProvisionerConnection(BluetoothService.connectedDevice!!, currentSubnet!!)
+                ProvisionerConnection(BluetoothService.getConnectedDevice()!!, currentSubnet!!)
             provisionerConnection.provisionerOOB
             provisionerConnection.provision(
                 provisionerConfiguration,

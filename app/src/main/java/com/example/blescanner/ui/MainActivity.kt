@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setFragmentContainerView() {
         mainNavigator.showNetworkFragment()
-        BluetoothService.typeOfSelectedDevice.observe(this) { deviceType ->
+        BluetoothService.deviceType.observe(this) { deviceType ->
             when (deviceType) {
                 "Blinky",
                 "Mesh" -> {

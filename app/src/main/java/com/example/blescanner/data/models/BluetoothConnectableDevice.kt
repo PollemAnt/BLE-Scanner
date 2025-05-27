@@ -6,11 +6,8 @@ import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.ContentValues
-import android.os.Handler
-import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.blescanner.core.BlinkyApplication
@@ -50,11 +47,11 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
 
     override fun getName(): String? = scanResult.device.name
 
-    override fun getAdvertisementData(): ByteArray? = scanResult.scanRecord!!.bytes
+    override fun getAdvertisementData(): ByteArray? = scanResult.scanRecord?.bytes
 
     override fun connect() {
         try {
-            Log.v("qwe", "Connect to the GATT server on the device")
+            _log("Connect to the GATT server on the device")
             bluetoothGatt = scanResult.device.connectGatt(
                 BlinkyApplication.appContext,
                 false,
@@ -62,7 +59,7 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
                 BluetoothDevice.TRANSPORT_LE
             )
         } catch (exception: IllegalArgumentException) {
-            "Device not found. Unable to connect.".toast()
+            _log("Device not found. Unable to connect.")
         }
     }
 
@@ -72,7 +69,7 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
             bluetoothGatt.let {
                 bluetoothGatt.disconnect()
             }
-            Log.v("qwe", "Disconnect from $name : $address")
+            _log("Disconnect from $name : $address")
         }
     }
 
@@ -80,45 +77,74 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
-            Log.v("qwe", "onConnectionStateChange status: $status")
-            when (newState) {
-                BluetoothProfile.STATE_CONNECTED ->
-                    onConnected()
 
-                BluetoothProfile.STATE_DISCONNECTED ->
-                    onDisconnected()
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                when (newState) {
+                    BluetoothProfile.STATE_CONNECTED ->
+                        onConnected()
+
+                    BluetoothProfile.STATE_DISCONNECTED ->
+                        onDisconnected()
+                }
+            } else {
+                _isFragmentReadyToShow.postValue(false)
+                // Ensure gatt.close() is called to free up resources
+                gatt.close()
+
+                onDisconnected()
             }
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.v("qwe", "onServicesDiscovered GATT_SUCCESS")
-                for(service in gatt?.services!!){
-                    BluetoothService.listOfServices.add(service)
-                }
-                createListOfCharacteristic(BluetoothService.listOfServices)
 
-                if (BluetoothService.connectedDevice!!.hasService(Constants.BLINKY_SERVICE_UUID)) {
-                    properCharacteristic()
+                gatt?.services?.let { services ->
+                    BluetoothService.listOfServices.clear()
+                    BluetoothService.listOfServices.addAll(services)
+                    createListOfCharacteristic(services)
+
+                    if (hasService(Constants.BLINKY_SERVICE_UUID)) {
+                        if (properCharacteristic()) {
+                            readDiodeStatus()
+                            setNotificationDeviceButtonState()
+                            _isFragmentReadyToShow.postValue(true)
+                        } else {
+                            _log("Failed to initialize required characteristics. Disconnecting.")
+                            _isFragmentReadyToShow.postValue(false)
+                            disconnect()
+                            return
+                        }
+                    } else {
+                        _isFragmentReadyToShow.postValue(true)
+                    }
+                    _log("Connected with $name : $address")
+                } ?: run {
+                    _log("onServicesDiscovered: GATT services were null")
                 }
-                _isFragmentReadyToShow.postValue(true)
-                "Connected with $name : $address".toast()
+
             } else {
-                Log.v("qwe", "onServicesDiscovered received: $status")
+                _log("onServicesDiscovered received: $status. Disconnecting.")
+                disconnect()
             }
         }
+
 
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?
         ) {
-            Log.v("qwe", "onCharacteristicChanged")
-            super.onCharacteristicChanged(gatt, characteristic)
-            if (characteristic!!.uuid == Constants.BUTTON_STATE_UUID)
-                _isButtonPressed.postValue(characteristic.value[0] == 1.toByte())
+            characteristic ?: return
+            when (characteristic.uuid) {
+                Constants.BUTTON_STATE_UUID -> _isButtonPressed.setValue(characteristic.value?.firstOrNull() == 1.toByte())
 
-            if (characteristic.uuid == Constants.MESH_PROVISION_CHARACTERISTIC_UUID || characteristic.uuid == Constants.MESH_SILICON_LABS_CHARACTERISTIC_UUID)
-                updateData(characteristic.service.uuid, characteristic.uuid, characteristic.value)
+                Constants.MESH_PROVISION_CHARACTERISTIC_UUID,
+                Constants.MESH_SILICON_LABS_CHARACTERISTIC_UUID ->
+                    updateData(
+                        characteristic.service.uuid,
+                        characteristic.uuid,
+                        characteristic.value
+                    )
+            }
         }
 
         override fun onCharacteristicRead(
@@ -126,86 +152,140 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
             characteristic: BluetoothGattCharacteristic?,
             status: Int
         ) {
-            if (characteristic == diodeControlCharacteristic) {
-                _isDiodeOn.postValue(characteristic.value[0] == 1.toByte())
-            }
-            setNotificationDeviceButtonState()
             super.onCharacteristicRead(gatt, characteristic, status)
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                characteristic ?: return
+                if (characteristic == diodeControlCharacteristic) {
+                    val value = characteristic.value.firstOrNull()
+                    if (value != null) {
+                        _isDiodeOn.postValue(value == 1.toByte())
+                    }
+                }
+            }
+
+            setNotificationDeviceButtonState()
         }
 
         override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
             super.onMtuChanged(gatt, mtu, status)
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 mtuSize = mtu
-                gatt.discoverServices()
+                discoverServices(gatt)
             }
         }
     }
 
     override fun onConnected() {
         super.onConnected()
-        Log.v("qwe", "STATE_CONNECTED")
+        _log("STATE_CONNECTED")
+        val mtuRequested = bluetoothGatt.requestMtu(517)
+        if (!mtuRequested) {
+            discoverServices(bluetoothGatt)
+        }
         val discoverServices = bluetoothGatt.discoverServices()
-        Log.v("qwe", "Are services discover ? = $discoverServices")
-        Log.v(
-            "qwe",
-            "Connection with: " + bluetoothGatt.device.name + " " + bluetoothGatt.device.address
-        )
+        _log("Are services discover ? = $discoverServices")
+        _log("Connection with: " + bluetoothGatt.device.name + " " + bluetoothGatt.device.address)
+    }
+
+    private fun discoverServices(bluetoothGatt: BluetoothGatt) {
+        if (!bluetoothGatt.discoverServices()) {
+            _log("Failed to initiate service discovery for ${bluetoothGatt.device.address}. Disconnecting.")
+            disconnect() // Or handle error appropriately
+        }
     }
 
     override fun onDisconnected() {
         super.onDisconnected()
-        BluetoothService.listOfCharacteristic.clear()
-        bluetoothGatt.close()
+        BluetoothService.listOfCharacteristics.clear()
+        BluetoothService.listOfServices.clear() // Clear services too
+        if (this::bluetoothGatt.isInitialized) { // Check if initialized before closing
+            bluetoothGatt.close() // Close GATT to release resources
+        }
         _isFragmentReadyToShow.postValue(false)
-        "Disconnected from $name:$address".toast()
+        _isButtonPressed.postValue(false) // Reset button state
+        _isDiodeOn.postValue(false) // Reset diode state
+        _log("Disconnected from $name:$address")
     }
 
     private fun createListOfCharacteristic(gattServices: List<BluetoothGattService>) {
-        BluetoothService.listOfCharacteristic.clear()
+        BluetoothService.listOfCharacteristics.clear()
         gattServices.forEach { gattService ->
             val gattCharacteristics = gattService.characteristics
             gattCharacteristics.forEach { gattCharacteristic ->
-                BluetoothService.listOfCharacteristic.add(gattCharacteristic)
+                BluetoothService.listOfCharacteristics.add(gattCharacteristic)
             }
         }
     }
 
-    private fun properCharacteristic() {
-        diodeControlCharacteristic =
-            BluetoothService.listOfServices[3].characteristics[0]
-        buttonStateCharacteristic =
-            BluetoothService.listOfServices[3].characteristics[1]
+    private fun properCharacteristic(): Boolean {
+        val service = BluetoothService.listOfServices.find {
+            it.uuid == Constants.BLINKY_SERVICE_UUID
+        } ?: run {
+            _log("Blinky service not found")
+            return false
+        }
+        diodeControlCharacteristic = service.characteristics.find {
+            it.uuid == Constants.DIODE_UUID
+        } ?: run {
+            _log("Diode characteristic not found")
+            return false
+        }
+        buttonStateCharacteristic = service.characteristics.find {
+            it.uuid == Constants.BUTTON_STATE_UUID
+        } ?: run {
+            _log("Button state characteristic not found")
+            return false
+        }
+        return true
     }
 
     private fun setNotificationDeviceButtonState() {
-        bluetoothGatt.setCharacteristicNotification(
-            buttonStateCharacteristic,
-            true
-        )
-        val descriptor = buttonStateCharacteristic.descriptors[0]
-        descriptor.value = (BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-        bluetoothGatt.writeDescriptor(descriptor)
+        writeWithNotification(buttonStateCharacteristic, true)
+    }
+
+    private fun writeWithNotification(
+        characteristic: BluetoothGattCharacteristic,
+        enable: Boolean
+    ): Boolean {
+        if (!bluetoothGatt.setCharacteristicNotification(characteristic, enable)) return false
+
+        val descriptor = characteristic.descriptors.firstOrNull()
+            ?: return false
+
+        descriptor.value = if (enable)
+            BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+        else
+            BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+
+        return bluetoothGatt.writeDescriptor(descriptor)
     }
 
     fun readDiodeStatus() {
-        bluetoothGatt.readCharacteristic(diodeControlCharacteristic)
+        if (!this::diodeControlCharacteristic.isInitialized) return
+
+        if (!bluetoothGatt.readCharacteristic(diodeControlCharacteristic)) {
+            _log("Failed to initiate readDiodeStatus")
+        }
     }
 
     fun setValueToControlDiode() {
-        _isDiodeOn.value = (diodeControlCharacteristic.value[0] == 1.toByte())
-        val byteArray = if (_isDiodeOn.value!!) byteArrayOf(0x00) else byteArrayOf(0x01)
+
+        if (!this::diodeControlCharacteristic.isInitialized) return
+
+        val currentDiodeState = _isDiodeOn.value ?: false
+        val byteArray = if (currentDiodeState) byteArrayOf(0x00) else byteArrayOf(0x01)
+
         writeData(
             Constants.BLINKY_SERVICE_UUID,
             Constants.DIODE_UUID,
             byteArray,
             object : ConnectableDeviceWriteCallback {
                 override fun onWrite(p0: UUID?, p1: UUID?) {
-                    _isDiodeOn.postValue(byteArray.contentEquals(byteArrayOf(0x01)))
+                    _isDiodeOn.postValue(byteArray.firstOrNull() == 0x01.toByte())
                 }
 
                 override fun onFailed(p0: UUID?, p1: UUID?) {
-                    "Led turn " + if (_isDiodeOn.value!!) "on" else "off" + " failed".toast()
+                    _log("Led turn " + if (byteArray.firstOrNull() == 0x01.toByte()) "on" else "off" + " failed")
                 }
             }
         )
@@ -217,19 +297,23 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
         data: ByteArray?,
         connectableDeviceWriteCallback: ConnectableDeviceWriteCallback?
     ) {
+        val bluetoothGattCharacteristic = service?.let { srv ->
+            characteristic?.let { charUUID ->
+                bluetoothGatt.getService(srv)?.getCharacteristic(charUUID)
+            }
+        } ?: run {
+            connectableDeviceWriteCallback?.onFailed(service, characteristic)
+            return
+        }
         try {
-            val bluetoothGattCharacteristic =
-                bluetoothGatt.getService(service)!!
-                    .getCharacteristic(characteristic)
             bluetoothGattCharacteristic.value = data
-            //bluetoothGattCharacteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
             if (!bluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic)) {
-                throw Exception("Writing to characteristic failed")
+                throw Exception("Writing failed")
             }
             connectableDeviceWriteCallback?.onWrite(service, characteristic)
         } catch (e: Exception) {
-            Log.e(ContentValues.TAG, "writeData error: ${e.message}")
-            connectableDeviceWriteCallback?.onFailed(service, characteristic)
+            _log("writeData: ${e.message}")
+            connectableDeviceWriteCallback.onFailed(service, characteristic)
         }
     }
 
@@ -323,14 +407,14 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
 
                 result?.let {
                     if (it.device.address == address) {
-                        BluetoothService.bluetoothScanner.stopScan(this)
+                        BluetoothService.stopScan()
                         scanResult = result
                         refreshBluetoothDeviceCallback?.success()
                     }
                 }
             }
         }
-        BluetoothService.bluetoothScanner.startScan(
+        BluetoothService.refreshBluetoothDevice(
             filters,
             settings,
             refreshScanCallback
@@ -371,14 +455,8 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
         return null
     }
 
-    private fun String.toast() {
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(
-                BlinkyApplication.appContext,
-                this,
-                Toast.LENGTH_LONG
-            )
-                .show()
-        }
+    private fun _log(message: String) {
+        Log.d("BluetoothDevice", message)
+        // W przyszłości: emituj przez LiveData do ViewModel -> Fragment jeśli potrzebujesz to pokazać
     }
 }

@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
@@ -23,7 +24,7 @@ class BluetoothDeviceScannerFragment : Fragment() {
 
     private fun onBluetoothConnectableDeviceClick(device: BluetoothConnectableDevice) {
         BluetoothService.stopScan()
-        BluetoothService.setDeviceToConnect(device)
+        BluetoothService.selectAndConnectDevice(device)
     }
 
     override fun onCreateView(
@@ -43,7 +44,7 @@ class BluetoothDeviceScannerFragment : Fragment() {
 
         setupRecyclerScanView()
 
-        BluetoothService.connectableDevices.observe(viewLifecycleOwner) { scanResults ->
+        BluetoothService.scannedDevices.observe(viewLifecycleOwner) { scanResults ->
             bluetoothConnectableDeviceAdapter.submitList(scanResults)
         }
         scrollToTopOfRecycleList()

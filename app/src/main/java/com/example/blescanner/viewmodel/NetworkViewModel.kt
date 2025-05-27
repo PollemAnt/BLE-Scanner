@@ -4,8 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.blescanner.bluetooth.BluetoothMeshNetwork
-import com.example.blescanner.bluetooth.BluetoothService
-import com.example.blescanner.data.models.BluetoothConnectableDevice
 import com.siliconlab.bluetoothmesh.adk.BluetoothMesh
 import com.siliconlab.bluetoothmesh.adk.data_model.subnet.Subnet
 

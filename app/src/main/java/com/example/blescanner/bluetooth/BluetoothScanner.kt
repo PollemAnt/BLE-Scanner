@@ -4,6 +4,7 @@ import android.Manifest
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.pm.PackageManager
@@ -12,6 +13,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.example.blescanner.core.BlinkyApplication
 import com.example.blescanner.data.models.BluetoothConnectableDevice
+import java.util.ArrayList
 
 class BluetoothScanner {
 
@@ -57,5 +59,13 @@ class BluetoothScanner {
             bluetoothScanner?.stopScan(scanCallback)
             scanCallback = null
         }
+    }
+
+    fun scanAfterRefresh(
+        filters: ArrayList<ScanFilter>,
+        settings: ScanSettings?,
+        refreshScanCallback: ScanCallback
+    ) {
+        bluetoothScanner?.startScan(filters, settings, refreshScanCallback)
     }
 }

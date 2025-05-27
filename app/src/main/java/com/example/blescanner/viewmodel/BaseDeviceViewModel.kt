@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.blescanner.bluetooth.BluetoothService
+import androidx.core.content.edit
 
 abstract class BaseDeviceViewModel : ViewModel() {
 
@@ -37,12 +38,12 @@ abstract class BaseDeviceViewModel : ViewModel() {
     }
 
     fun addToFavorite(address: String, name: String?) {
-        prefs.edit().putString(address, name ?: "Unknown").apply()
+        prefs.edit { putString(address, name ?: "Unknown") }
     }
 
     fun deleteFromFavorite() {
         BluetoothService.getConnectedDevice()?.address?.let {
-            prefs.edit().remove(it).apply()
+            prefs.edit { remove(it) }
         }
     }
 

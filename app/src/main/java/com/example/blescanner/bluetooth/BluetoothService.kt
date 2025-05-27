@@ -3,10 +3,14 @@ package com.example.blescanner.bluetooth
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanSettings
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.blescanner.core.BlinkyApplication
 import com.example.blescanner.data.models.BluetoothConnectableDevice
+import java.util.ArrayList
 
 object BluetoothService {
 
@@ -88,6 +92,14 @@ object BluetoothService {
     }
 
     fun getSelectedDevice(): BluetoothConnectableDevice? = deviceManager.getSelectedDevice()
+
+    fun refreshBluetoothDevice(
+        filters: ArrayList<ScanFilter>,
+        settings: ScanSettings?,
+        refreshScanCallback: ScanCallback
+    ) {
+        scanner.scanAfterRefresh(filters,settings,refreshScanCallback)
+    }
 }
 
 

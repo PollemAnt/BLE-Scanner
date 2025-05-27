@@ -46,7 +46,7 @@ class MeshFragment : BaseDeviceFragment<FragmentMeshBinding, MeshViewModel>() {
     override fun observeSpecific() {
         viewModel.deviceName.observe(viewLifecycleOwner) { name ->
             val address = BluetoothService.getConnectedDevice()?.address ?: ""
-            binding.device.text = (name ?: "Mesh") + " $address"
+            binding.device.text = name ?: ("Mesh$address")
         }
 
         viewModel.services.observe(viewLifecycleOwner) { services ->
