@@ -1,11 +1,13 @@
 package com.example.blescanner.data.models
 
+import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.ContentValues
+import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -18,6 +20,7 @@ import com.siliconlab.bluetoothmesh.adk.provisioning.ProvisionerConnection
 import java.lang.reflect.Method
 import java.util.*
 
+@SuppressLint("MissingPermission")
 class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
 
     var refreshBluetoothDeviceCallback: RefreshBluetoothDeviceCallback? = null
@@ -65,7 +68,7 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
 
     override fun disconnect() {
         _isFragmentReadyToShow.postValue(false)
-        if (BluetoothService.isInitialized()) {
+        if (isInitialized()) {
             bluetoothGatt.let {
                 bluetoothGatt.disconnect()
             }
@@ -128,43 +131,39 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
             }
         }
 
-
         override fun onCharacteristicChanged(
-            gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray
         ) {
-            characteristic ?: return
             when (characteristic.uuid) {
-                Constants.BUTTON_STATE_UUID -> _isButtonPressed.setValue(characteristic.value?.firstOrNull() == 1.toByte())
+                Constants.BUTTON_STATE_UUID -> _isButtonPressed.setValue(value.firstOrNull() == 1.toByte())
 
                 Constants.MESH_PROVISION_CHARACTERISTIC_UUID,
                 Constants.MESH_SILICON_LABS_CHARACTERISTIC_UUID ->
                     updateData(
                         characteristic.service.uuid,
                         characteristic.uuid,
-                        characteristic.value
+                        value
                     )
             }
         }
 
         override fun onCharacteristicRead(
-            gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?,
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray,
             status: Int
         ) {
-            super.onCharacteristicRead(gatt, characteristic, status)
+            super.onCharacteristicRead(gatt, characteristic, value, status)
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                characteristic ?: return
                 if (characteristic == diodeControlCharacteristic) {
-                    val value = characteristic.value.firstOrNull()
-                    if (value != null) {
-                        _isDiodeOn.postValue(value == 1.toByte())
-                    }
+                    _isDiodeOn.postValue(value.contentEquals(byteArrayOf(1)))
                 }
             }
-
             setNotificationDeviceButtonState()
         }
+
 
         override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
             super.onMtuChanged(gatt, mtu, status)
@@ -240,24 +239,27 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
     }
 
     private fun setNotificationDeviceButtonState() {
-        writeWithNotification(buttonStateCharacteristic, true)
+        writeWithNotification(buttonStateCharacteristic)
     }
 
-    private fun writeWithNotification(
-        characteristic: BluetoothGattCharacteristic,
-        enable: Boolean
-    ): Boolean {
-        if (!bluetoothGatt.setCharacteristicNotification(characteristic, enable)) return false
+    private fun writeWithNotification(characteristic: BluetoothGattCharacteristic) {
+        val success = bluetoothGatt.setCharacteristicNotification(characteristic, true)
+        if (!success) return
 
-        val descriptor = characteristic.descriptors.firstOrNull()
-            ?: return false
+        val descriptor = characteristic.descriptors.firstOrNull() ?: return
 
-        descriptor.value = if (enable)
-            BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-        else
-            BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
-
-        return bluetoothGatt.writeDescriptor(descriptor)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bluetoothGatt.writeDescriptor(
+                descriptor,
+                BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            @Suppress("DEPRECATION")
+            bluetoothGatt.writeDescriptor(descriptor)
+        }
+        return
     }
 
     fun readDiodeStatus() {
@@ -306,14 +308,27 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
             return
         }
         try {
-            bluetoothGattCharacteristic.value = data
-            if (!bluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic)) {
-                throw Exception("Writing failed")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (data == null) throw Exception("Data is null")
+                if (bluetoothGatt.writeCharacteristic(
+                        bluetoothGattCharacteristic,
+                        data,
+                        BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                    ) != BluetoothStatusCodes.SUCCESS
+                )
+                    throw Exception("Writing failed")
+            } else {
+                @Suppress("DEPRECATION")
+                bluetoothGattCharacteristic.value = data
+                @Suppress("DEPRECATION")
+                if (!bluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic)) {
+                    throw Exception("Writing failed")
+                }
             }
             connectableDeviceWriteCallback?.onWrite(service, characteristic)
         } catch (e: Exception) {
             _log("writeData: ${e.message}")
-            connectableDeviceWriteCallback.onFailed(service, characteristic)
+            connectableDeviceWriteCallback?.onFailed(service, characteristic)
         }
     }
 
@@ -457,6 +472,5 @@ class BluetoothConnectableDevice(result: ScanResult) : ConnectableDevice() {
 
     private fun _log(message: String) {
         Log.d("BluetoothDevice", message)
-        // W przyszłości: emituj przez LiveData do ViewModel -> Fragment jeśli potrzebujesz to pokazać
     }
 }
