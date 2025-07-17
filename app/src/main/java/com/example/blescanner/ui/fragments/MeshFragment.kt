@@ -5,11 +5,17 @@ import android.widget.Toast
 import com.example.blescanner.R
 import com.example.blescanner.bluetooth.BluetoothService
 import com.example.blescanner.databinding.FragmentMeshBinding
+import com.example.blescanner.viewmodel.BaseDeviceViewModel
 import com.example.blescanner.viewmodel.MeshViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MeshFragment : BaseDeviceFragment<FragmentMeshBinding, MeshViewModel>() {
     override val layoutRes = R.layout.fragment_mesh
     override val viewModelClass = MeshViewModel::class.java
+
+    private val viewModel: MeshViewModel by viewModel()
+
+    override fun getViewModel(): BaseDeviceViewModel = viewModel
 
     override fun onDeviceReady() {
         binding.layoutBluetoothDevice.visibility = View.VISIBLE

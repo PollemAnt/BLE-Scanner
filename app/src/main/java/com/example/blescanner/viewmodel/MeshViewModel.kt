@@ -10,7 +10,7 @@ import com.example.blescanner.bluetooth.BluetoothMeshNetwork
 import com.example.blescanner.bluetooth.BluetoothService
 import com.example.blescanner.core.BlinkyApplication.Companion.appContext
 
-class MeshViewModel : BaseDeviceViewModel() {
+class MeshViewModel(private val bluetoothService: BluetoothService) : BaseDeviceViewModel() {
 
     private val _deviceName = MutableLiveData<String>()
     val deviceName: LiveData<String> = _deviceName
@@ -25,11 +25,11 @@ class MeshViewModel : BaseDeviceViewModel() {
         appContext.getSharedPreferences("Favorites mesh devices", Context.MODE_PRIVATE)
 
     init {
-        _deviceName.value = BluetoothService.getConnectedDevice()?.name
+        _deviceName.value = bluetoothService.getConnectedDevice()?.name
         updateLists()
     }
 
-    fun isDeviceConnected(): Boolean = BluetoothService.getConnectedDevice() == null
+    fun isDeviceConnected(): Boolean = bluetoothService.getConnectedDevice() == null
 
     fun prepareProvision() {
         BluetoothMeshNetwork.prepareProvision()
@@ -40,7 +40,7 @@ class MeshViewModel : BaseDeviceViewModel() {
     }
 
     fun updateLists() {
-        _services.value = BluetoothService.listOfServices
-        _characteristics.value = BluetoothService.listOfCharacteristics
+        _services.value = bluetoothService.listOfServices
+        _characteristics.value = bluetoothService.listOfCharacteristics
     }
 }
