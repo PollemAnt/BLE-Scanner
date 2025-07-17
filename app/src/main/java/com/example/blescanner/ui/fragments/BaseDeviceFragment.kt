@@ -9,7 +9,6 @@ import androidx.activity.addCallback
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.example.blescanner.R
 import com.example.blescanner.viewmodel.BaseDeviceViewModel
 
@@ -18,7 +17,7 @@ abstract class BaseDeviceFragment<T : ViewDataBinding, VM : BaseDeviceViewModel>
     protected lateinit var binding: T
     protected abstract val layoutRes: Int
     protected abstract val viewModelClass: Class<VM>
-    protected lateinit var viewModel: VM
+    abstract fun getViewModel(): BaseDeviceViewModel
 
     abstract fun onDeviceReady()
     abstract fun onClickActions()
@@ -31,7 +30,6 @@ abstract class BaseDeviceFragment<T : ViewDataBinding, VM : BaseDeviceViewModel>
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        viewModel = ViewModelProvider(this)[viewModelClass]
         observeCommon()
         observeSpecific()
         onBackPressed()
@@ -40,7 +38,7 @@ abstract class BaseDeviceFragment<T : ViewDataBinding, VM : BaseDeviceViewModel>
     open fun observeSpecific() {}
 
     private fun observeCommon() {
-        viewModel.isFragmentReadyToShow.observe(viewLifecycleOwner) {
+        getViewModel().isFragmentReadyToShow.observe(viewLifecycleOwner) {
             if (it) {
                 binding.root.findViewById<View>(R.id.is_device_connected).visibility = View.GONE
                 binding.root.findViewById<View>(R.id.progress_circular).visibility = View.GONE
@@ -49,7 +47,7 @@ abstract class BaseDeviceFragment<T : ViewDataBinding, VM : BaseDeviceViewModel>
             }
         }
 
-        viewModel.areListsShown.observe(viewLifecycleOwner) { shown ->
+        getViewModel().areListsShown.observe(viewLifecycleOwner) { shown ->
             binding.root.findViewById<View>(R.id.services_list).visibility =
                 if (shown) View.VISIBLE else View.GONE
             binding.root.findViewById<View>(R.id.characteristics_list).visibility =
@@ -61,7 +59,7 @@ abstract class BaseDeviceFragment<T : ViewDataBinding, VM : BaseDeviceViewModel>
 
     private fun onBackPressed() {
         activity?.onBackPressedDispatcher?.addCallback(viewLifecycleOwner) {
-            viewModel.onBackPressed()
+            getViewModel().onBackPressed()
         }
     }
 }

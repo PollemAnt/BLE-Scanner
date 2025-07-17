@@ -19,11 +19,8 @@ class MainNavigator(private val activity: MainActivity, private val binding: Act
     private val subnetFragment = SubnetFragment()
 
     fun showNetworkFragment() {
-        binding.apply {
-            buttonShowNetwork.visibility = View.GONE
-            buttonShowScanner.visibility = View.GONE
-            buttonStartStopScan.visibility = View.GONE
-        }
+        binding.buttonStartStopScan.visibility = View.GONE
+
         activity.supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragment_container_view, networkFragment)
             commit()
@@ -31,12 +28,8 @@ class MainNavigator(private val activity: MainActivity, private val binding: Act
     }
 
     fun showSubnetFragment() {
-        binding.apply {
-            buttonShowNetwork.visibility = View.GONE
-            buttonShowScanner.visibility = View.VISIBLE
-            buttonShowScanner.text = "Add device"
-            buttonStartStopScan.visibility = View.GONE
-        }
+        binding.buttonStartStopScan.visibility = View.GONE
+
         activity.supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragment_container_view, subnetFragment)
             commit()
@@ -44,11 +37,8 @@ class MainNavigator(private val activity: MainActivity, private val binding: Act
     }
 
     fun showScannerFragment() {
-        binding.apply {
-            buttonShowScanner.visibility = View.GONE
-            buttonStartStopScan.visibility = View.VISIBLE
-            buttonShowNetwork.visibility = View.GONE
-        }
+        binding.buttonStartStopScan.visibility = View.VISIBLE
+
         activity.supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragment_container_view, bluetoothDeviceScannerFragment)
             commit()
@@ -56,11 +46,8 @@ class MainNavigator(private val activity: MainActivity, private val binding: Act
     }
 
     fun showDeviceFragment() {
-       binding.apply {
-            buttonShowScanner.visibility = View.GONE
-            buttonStartStopScan.visibility = View.GONE
-            buttonShowNetwork.visibility = View.GONE
-        }
+       binding.buttonStartStopScan.visibility = View.GONE
+
         activity.supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragment_container_view, deviceFragment)
             commit()
@@ -68,11 +55,8 @@ class MainNavigator(private val activity: MainActivity, private val binding: Act
     }
 
     fun showMeshFragment() {
-        binding.apply {
-            buttonShowScanner.visibility = View.GONE
-            buttonStartStopScan.visibility = View.GONE
-            buttonShowNetwork.visibility = View.GONE
-        }
+        binding.buttonStartStopScan.visibility = View.GONE
+
         activity.supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragment_container_view, meshFragment)
             commit()

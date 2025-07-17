@@ -91,7 +91,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setFragmentContainerView() {
-        mainNavigator.showNetworkFragment()
         BluetoothService.deviceType.observe(this) { deviceType ->
             when (deviceType) {
                 "Blinky",
@@ -101,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 "Unknown" -> deviceIsUnknown()
-                null -> navigationShowScannerFragment()
+                //null -> navigationShowScannerFragment()
             }
         }
         BluetoothMeshNetwork.isSubnetSelected.observe(this) { isSubnetSelected ->
@@ -130,47 +129,60 @@ class MainActivity : AppCompatActivity() {
     private fun setOnClickListeners() {
         binding.apply {
             buttonStartStopScan.setOnClickListener {
-                checkPermissions()
-            }
-            buttonShowScanner.setOnClickListener {
-                navigationShowScannerFragment()
-            }
-            buttonShowNetwork.setOnClickListener {
-                navigationShowDeviceFragment()
+                onStartStopScanClicked()
             }
         }
     }
 
-    private fun checkPermissions() {
+    private fun onStartStopScanClicked() {
         bluetoothScanPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             isBluetoothScanPermissionGranted
         else
             true
 
-        if (isLocationPermissionGranted && isCoarseLocationPermissionGranted && isBluetoothPermissionGranted && bluetoothScanPermissionState!!) {
-            if (isLocationOn && BluetoothService.isEnabled()) {
-                isScanning = if (!isScanning) {
-                    BluetoothService.clearScanList()
-                    BluetoothService.startScan()
-                    true
-                } else {
-                    BluetoothService.stopScan()
-                    false
-                }
+        if (hasAllPermissions()) {
+            if (isLocationAndBluetoothOn()) {
+                toggleScan()
             } else {
-                if (!isLocationOn)
-                    requestLocationEnable(this)
-
-                if (!BluetoothService.isEnabled())
-                    requestBluetoothEnable(bluetoothTurnOnRequest)
+                requestMissingFeatures()
             }
         } else {
-            if (!isLocationPermissionGranted or !isCoarseLocationPermissionGranted) requestLocationPermissions(
-                locationPermissionRequest
-            )
-            else if (!isBluetoothScanPermissionGranted or !isBluetoothPermissionGranted) requestBluetoothPermissions(
-                requestBluetoothScanConnectPermissions
-            )
+            requestMissingPermissions()
+        }
+    }
+
+    private fun hasAllPermissions(): Boolean {
+        return isLocationPermissionGranted &&
+                isCoarseLocationPermissionGranted &&
+                isBluetoothPermissionGranted &&
+                bluetoothScanPermissionState == true
+    }
+
+    private fun isLocationAndBluetoothOn(): Boolean {
+        return isLocationOn && BluetoothService.isEnabled()
+    }
+
+    private fun toggleScan() {
+        isScanning = if (!isScanning) {
+            BluetoothService.clearScanList()
+            BluetoothService.startScan()
+            true
+        } else {
+            BluetoothService.stopScan()
+            false
+        }
+    }
+
+    private fun requestMissingFeatures() {
+        if (!isLocationOn) requestLocationEnable(this)
+        if (!BluetoothService.isEnabled()) requestBluetoothEnable(bluetoothTurnOnRequest)
+    }
+
+    private fun requestMissingPermissions() {
+        if (!isLocationPermissionGranted || !isCoarseLocationPermissionGranted) {
+            requestLocationPermissions(locationPermissionRequest)
+        } else if (!isBluetoothScanPermissionGranted || !isBluetoothPermissionGranted) {
+            requestBluetoothPermissions(requestBluetoothScanConnectPermissions)
         }
     }
 

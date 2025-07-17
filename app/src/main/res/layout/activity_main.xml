@@ -9,24 +9,11 @@
     tools:context=".ui.MainActivity">
 
     <Button
-        android:id="@+id/button_show_scanner"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center" />
-
-    <Button
         android:id="@+id/button_start_stop_scan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/start_scan" />
-
-    <Button
-        android:id="@+id/button_show_network"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Network" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container_view"

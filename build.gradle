@@ -1,4 +1,7 @@
 buildscript {
+    dependencies {
+        classpath "io.insert-koin:koin-gradle-plugin:3.5.0"
+    }
     ext {
         agp_version = '8.5.0'
         agp_version1 = '8.7.0'
