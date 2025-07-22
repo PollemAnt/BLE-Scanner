@@ -1,4 +1,4 @@
-      ## 🇵🇱 Polski
+## 🇵🇱 Polski
 
 This project also has a [Polish version of the README](README_PL.md).
 
