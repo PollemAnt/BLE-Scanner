@@ -27,6 +27,10 @@ Dodatkowo wspiera tworzenie sieci BLE Mesh dla konkretnych typów urządzeń, um
 Projekt został napisany w:
 
 - Kotlin
+- MVVM
+- Koin
+- Jetpack Compose
+- Coroutines
 - Android SDK (API 31+)
 - Android BLE API
 - View Binding

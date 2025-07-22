@@ -1,4 +1,4 @@
-## 🇵🇱 Polski
+      ## 🇵🇱 Polski
 
 This project also has a [Polish version of the README](README_PL.md).
 
@@ -31,6 +31,10 @@ Additionally, it supports creating BLE Mesh networks for specific types of devic
 The project is built with:
 
 - Kotlin
+- MVVM
+- Koin
+- Jetpack Compose
+- Coroutines
 - Android SDK (API 31+)
 - Android BLE API
 - View Binding
